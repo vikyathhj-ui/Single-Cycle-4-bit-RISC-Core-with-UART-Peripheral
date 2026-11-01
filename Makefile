@@ -5,13 +5,16 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
-.PHONY: help env legacy-probe memmap memmap-check clean
+.PHONY: help env legacy-probe memmap memmap-check lint formal formal-quick clean
 
 help:
 	@echo "make env           tool table -> results/env_check.txt (fails if anything is missing)"
 	@echo "make legacy-probe  docs/AUDIT.md evidence -> results/legacy_probe.txt"
 	@echo "make memmap        scripts/memmap.yaml -> docs/MEMORY_MAP.md, sw/include/lp_rv32.h, tb/memmap.py"
 	@echo "make memmap-check  fail if those generated files are stale"
+	@echo "make lint          verilator -Wall, normal + RVFI build -> results/lint.txt"
+	@echo "make formal        riscv-formal, full depths -> results/formal/summary.json"
+	@echo "make formal-quick  riscv-formal, depths capped at 10 (CI) -> results/formal/summary_quick.json"
 	@echo "make clean         remove sim_build/"
 
 env:
@@ -25,6 +28,15 @@ memmap:
 
 memmap-check:
 	python3 scripts/gen_memmap.py --check
+
+lint:
+	scripts/lint.sh
+
+formal:
+	python3 scripts/run_formal.py
+
+formal-quick:
+	python3 scripts/run_formal.py --quick
 
 clean:
 	rm -rf sim_build

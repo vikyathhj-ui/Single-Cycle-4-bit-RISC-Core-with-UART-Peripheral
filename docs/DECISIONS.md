@@ -148,3 +148,100 @@ alternative. **The owner confirmed all of them unchanged on 2026-11-01 ("ok").**
   - `scripts/gen_memmap.py` rejects any non-string enum key, so the bug cannot come back silently.
   - Re-pin when P2 merges.
   - No change is made in the P2 repo; the fix is already on its branch.
+
+## D-010 — riscv-formal setup (Phase 2)
+All options come from the installed framework (`ext/riscv-formal` at `c992aa6`, its
+`docs/source/*.rst` and `cores/nerv/`), as BRIEF rule 5 requires.
+- **Reading the RTL.**
+  - genchecks reads `[verilog-files]` with Yosys `read -sv`. That frontend rejects the
+    in-module `import alu_pkg::*` used by P1's units (`syntax error, unexpected TOK_IMPORT`).
+  - So the core is read through the documented `[script-sources]` section, with
+    `plugin -i slang` and `read_slang -D RISCV_FORMAL --top lp_rv32_core ...` (P1 D-012 uses the
+    same frontend).
+  - Only `formal/wrapper.sv` goes through `[verilog-files]`. The file list comes from
+    `rtl/core/core.f`.
+- **Runner.** genchecks must run two levels below the framework root. `scripts/run_formal.py`
+  therefore copies `formal/checks.cfg` and `formal/wrapper.sv` into the git-ignored
+  `ext/riscv-formal/cores/lp_rv32/` and runs the framework's own `genchecks.py` and makefile.
+- **misa is not exposed over RVFI.**
+  - With `RISCV_FORMAL_CSR_MISA`, the framework's Zbb models (e.g. `insns/insn_andn.v`) require
+    misa bit 1 to be set, or they expect a trap.
+  - The ratified spec defines bit 1 as "B" (Zba + Zbb + Zbs) [P §3.1.1], and this core keeps it 0
+    (S-3).
+  - misa is a constant (`core_csr.sv`), checked in simulation.
+- **csrw is checked only on fully writable CSRs.**
+  - `rvfi_csrw_check.sv` asserts that every bit an instruction sets or clears ends up in the
+    "effective" written value. A read-only-zero WARL bit can never satisfy that.
+  - The CSRs in `[csrs]` are therefore `mscratch`, `mtval`, `mcycle` and `minstret`. The counters
+    also get the `upcnt` check.
+  - mstatus, mie, mtvec, mepc and mcause are verified by the arch tests (Phase 3) and the system
+    tests (Phase 4).
+- **`[illegal_csrs]`:** a set of unimplemented M-mode addresses, plus "write to mvendorid".
+  `csr_ill` proves that these trap.
+- **Environment model** (`formal/wrapper.sv`):
+  - The I-port and read data are unconstrained.
+  - D-port responses come with any delay, one outstanding request at most.
+  - The interrupt lines are unconstrained.
+  - Bus errors are tied to 0: access faults are not modelled and are covered in simulation.
+  - QREQn = 1.
+- **Liveness fairness** (`LP_FAIRNESS`, liveness check only):
+  - A bus response arrives within 2 cycles.
+  - The instruction stream contains no WFI. WFI may legally wait forever (SPEC §5.5), so without
+    this assumption liveness would fail by design.
+- **Re-fetch on stall.**
+  - In the model, a stalled ID/EX instruction is re-fetched, and the free I-port may return a
+    different word. The core evaluates ID/EX purely combinationally each cycle, so this is just
+    "a different instruction was fetched".
+  - On silicon the SRAM returns the same word (MICROARCH §3).
+
+## D-011 — Lint without waivers
+- **Tool and builds:** `scripts/lint.sh` runs Verilator `-Wall` on `rtl/core/core.f` in the normal
+  build and the RVFI build. Both are clean, with no `lint_off` pragmas.
+- **Signals only RVFI uses:** in the normal build they are XOR-reduced into a signal named
+  `unused_*`, which Verilator's default `--unused-regexp` accepts.
+- **Unused package parameter:** the vendored `alu_pkg.OP_ILLEGAL_MIN` would otherwise be unused. It
+  is used in an elaboration check in `core_alu.sv`, which fails the build if a re-vendored package
+  changes the opcode encoding.
+
+## D-012 — riscv-formal `reg` check at depth 14, the others at 20 (Phase 2)
+- **Context:** with `reg 5 20` (SBY depth 21), the first full run finished the other 78 checks in
+  about 5 minutes, all PASS. `reg_ch0` was still in yices on its single final step after more than
+  2 hours (`ps` showed the solver at 1:59:17). It was stopped. No status was produced, so it is
+  not reported as a pass.
+- **Probe:** `scripts/run_formal.py --only '^reg_ch0$' --set reg=5,N --work lp_rv32_regN`, run
+  in parallel with a 30-minute limit each (`results/formal/probe_reg*.log`,
+  `results/formal/probe_reg_done.txt`, `results/formal/probe_lp_rv32_reg*.json`):
+
+  | `reg` depth in cfg | SBY depth | Result | Solver time |
+  |---|---|---|---|
+  | 12 | 13 | PASS | 30 s |
+  | 14 | 15 | PASS | 312 s |
+  | 16 | 17 | no result within 1800 s (timeout) | — |
+  | 18 | 19 | no result within 1800 s (timeout) | — |
+
+- **Choice:** `reg 5 14`, the deepest depth that completed. Every other check keeps its configured
+  depth.
+- **What this means:** `reg` proves register read-after-write consistency for traces of up to 15
+  cycles after reset.
+  - In this pipeline a value is forwarded at distance 1 and read from the register file at
+    distance ≥ 2 (MICROARCH §4). Bug 01 appeared at depth 11.
+  - Longer sequences are covered by the arch tests and system tests (Phases 3–4).
+- **Possible later improvement (not done):** run `reg` with a different engine, or let it run for
+  hours. That is optional and would be recorded here.
+
+## Bugs found by formal
+Every counterexample is kept under `results/formal_cex/`. `scripts/cex_dump.py <vcd>` prints it as
+a per-cycle table.
+
+### Bug 01 — Exceptions skipped the load-use stall (`reg_ch0`, quick depth 11)
+- **Evidence:** `results/formal_cex/bug01_exc_ignores_load_use/` (VCD and `trace.txt`).
+- **Symptom:** at cycle 11, a store at pc 0x10 retired with `rvfi_rs2_rdata = c0100108`. But x23
+  had been written with `c0100118` by the load at pc 0xc, which retired in cycle 10.
+- **Cause:** `adv_ex` let an instruction with a synchronous exception leave ID/EX even during a
+  load-use stall (`take_irq || exc || (!load_use && !wfi_wait)`).
+  - The store here was misaligned, so it trapped, and it read a stale register.
+  - This is a real bug: a misaligned-address or jump-target exception decision can depend on
+    `rs1`, and that would be computed from the stale value.
+- **Fix:** only interrupts bypass the stall, since they use no operands:
+  `take_irq || (!load_use && (exc || !wfi_wait))` in `rtl/core/lp_rv32_core.sv`.
+- **Verification:** all 79 checks pass at quick depth afterwards (`results/formal/summary_quick.json`).

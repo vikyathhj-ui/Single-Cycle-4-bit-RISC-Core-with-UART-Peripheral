@@ -1,0 +1,49 @@
+Reading checks.cfg.
+Creating checks directory.
+Generated 79 checks.
+make: Entering directory '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/checks'
+sby reg_ch0.sby
+SBY 14:02:50 [reg_ch0] Writing '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/checks/reg_ch0/src/defines.sv'.
+SBY 14:02:50 [reg_ch0] Writing '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/checks/reg_ch0/src/reg_ch0.sv'.
+SBY 14:02:50 [reg_ch0] Copy '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/../../checks/rvfi_macros.vh' to '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/checks/reg_ch0/src/rvfi_macros.vh'.
+SBY 14:02:50 [reg_ch0] Copy '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/../../checks/rvfi_channel.sv' to '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/checks/reg_ch0/src/rvfi_channel.sv'.
+SBY 14:02:50 [reg_ch0] Copy '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/../../checks/rvfi_testbench.sv' to '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/checks/reg_ch0/src/rvfi_testbench.sv'.
+SBY 14:02:50 [reg_ch0] Copy '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/../../checks/rvfi_reg_check.sv' to '/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal/cores/lp_rv32_reg18/checks/reg_ch0/src/rvfi_reg_check.sv'.
+SBY 14:02:50 [reg_ch0] engine_0: smtbmc yices
+SBY 14:02:50 [reg_ch0] base: starting process "cd reg_ch0/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 14:02:51 [reg_ch0] base: finished (returncode=0)
+SBY 14:02:51 [reg_ch0] prep: starting process "cd reg_ch0/model; yosys -ql design_prep.log design_prep.ys"
+SBY 14:02:52 [reg_ch0] prep: finished (returncode=0)
+SBY 14:02:52 [reg_ch0] smt2: starting process "cd reg_ch0/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY 14:02:52 [reg_ch0] smt2: finished (returncode=0)
+SBY 14:02:52 [reg_ch0] engine_0: starting process "cd reg_ch0; yosys-smtbmc -s yices --presat --unroll --noprogress -t 18:19  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+SBY 14:02:52 [reg_ch0] engine_0: ##   0:00:00  Solver: yices
+SBY 14:02:52 [reg_ch0] engine_0: ##   0:00:00  Skipping step 0..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:00  Skipping step 1..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:00  Skipping step 2..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:00  Skipping step 3..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:00  Skipping step 4..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:00  Skipping step 5..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:00  Skipping step 6..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:00  Skipping step 7..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:01  Skipping step 8..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:01  Skipping step 9..
+SBY 14:02:53 [reg_ch0] engine_0: ##   0:00:01  Skipping step 10..
+SBY 14:02:54 [reg_ch0] engine_0: ##   0:00:01  Skipping step 11..
+SBY 14:02:54 [reg_ch0] engine_0: ##   0:00:01  Skipping step 12..
+SBY 14:02:54 [reg_ch0] engine_0: ##   0:00:01  Skipping step 13..
+SBY 14:02:54 [reg_ch0] engine_0: ##   0:00:01  Skipping step 14..
+SBY 14:02:54 [reg_ch0] engine_0: ##   0:00:01  Skipping step 15..
+SBY 14:02:54 [reg_ch0] engine_0: ##   0:00:01  Skipping step 16..
+SBY 14:02:54 [reg_ch0] engine_0: ##   0:00:01  Skipping step 17..
+SBY 14:02:54 [reg_ch0] engine_0: ##   0:00:01  Checking assumptions in step 18..
+SBY 14:02:55 [reg_ch0] engine_0: ##   0:00:02  Checking assertions in step 18..
+SBY 14:03:55 [reg_ch0] engine_0: ##   0:01:02  waiting for solver (1 minute)
+SBY 14:07:55 [reg_ch0] engine_0: ##   0:05:02  waiting for solver (5 minutes)
+SBY 14:12:55 [reg_ch0] engine_0: ##   0:10:02  waiting for solver (10 minutes)
+SBY 14:17:55 [reg_ch0] engine_0: ##   0:15:02  waiting for solver (15 minutes)
+SBY ---- Keyboard interrupt or external termination signal ----
+SBY 14:32:49 [reg_ch0] engine_0: terminating process
+SBY ---- Keyboard interrupt or external termination signal ----
+SBY 14:32:49 [reg_ch0] engine_0: terminating process
+make: *** [makefile:92: reg_ch0/status] Error 1

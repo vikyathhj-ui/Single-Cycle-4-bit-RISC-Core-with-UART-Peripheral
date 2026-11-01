@@ -1,0 +1,5 @@
+# verilator lint (Verilator 5.050 2026-07-01 rev v5.050)
+## lp_rv32_core (normal build)
+clean
+## lp_rv32_core -DRISCV_FORMAL
+clean
