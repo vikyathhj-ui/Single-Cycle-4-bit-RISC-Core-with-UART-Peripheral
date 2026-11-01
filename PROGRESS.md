@@ -3,13 +3,12 @@
 Single source of truth for status. Update this before every commit.
 Spec: `docs/BRIEF.md`. Branch: `rework/lp-rv32`. PRs target `main`.
 
-**Current state (2026-11-01): Phase 0 DONE. Next: Phase 1 (spec), which ends at an owner gate.**
+**Current state (2026-11-01): Phase 1 DONE (spec confirmed, D-007). Next: Phase 2.**
 - Scope agreed with the owner: Phases 0–2 now. Phase 3+ waits until P2 (`multipower`) is merged (D-006).
-- To resume Phase 1, write `docs/SPEC.md` and `docs/MICROARCH.md`, then `scripts/memmap.yaml` → generator →
-  `sw/memmap.h`, `tb/memmap.py` and `docs/MEMORY_MAP.md`.
-  - Import the PMU registers from P2's merged `scripts/regmap.yaml` (master).
-  - Propose an answer for D-005 (SRAM TT-only liberty).
-  - Then STOP and ask the owner to confirm the spec. After that, open the Phase 0+1 PR.
+- Phase 2 resume point:
+  1. Vendor P1's combinational units into `vendor/alu/` (pinned hash in `vendor/VENDOR.md`).
+  2. Write `rtl/core/*` per docs/MICROARCH.md, then the RVFI port.
+  3. Write `formal/checks.cfg` and `formal/wrapper.sv`, then run riscv-formal.
 
 ## Phase 0 — Setup
 - [x] Environment check: `scripts/env_check.sh` → `results/env_check.txt`. All found (RESULT line).
@@ -29,11 +28,14 @@ Spec: `docs/BRIEF.md`. Branch: `rework/lp-rv32`. PRs target `main`.
 - [x] Commit + push `rework/lp-rv32`. The PR opens together with Phase 1, after the owner's spec review.
 
 ## Phase 1 — Spec
-- [ ] `docs/SPEC.md`, with RISC-V unprivileged/privileged section citations.
-- [ ] `docs/MICROARCH.md`: pipeline diagram, hazard table, CSR map.
-- [ ] Memory map YAML → C header + Python + Markdown generator (with a `--check` staleness mode).
-- [ ] D-005 proposal (SRAM corners). Justify 3 stages vs 2/5 (area and CPI data come in Phase 2).
-- [ ] **Gate: owner confirms the spec.** Commit, push, open the Phase 0+1 PR.
+- [x] `docs/SPEC.md`: RV32I/Zicsr/Zbb, CSRs, traps, WFI, boot, power, peripherals. Citations are to
+      the ratified 20250508 manuals in `ext/specs/` (D-008).
+- [x] `docs/MICROARCH.md`: pipeline, OpenRAM half-cycle timing (M-1), hazard table H1–H11, precise
+      traps, CSR map, stage-count data plan, formal plan.
+- [x] `scripts/memmap.yaml` → `scripts/gen_memmap.py` (`make memmap`, `make memmap-check`) →
+      `docs/MEMORY_MAP.md`, `sw/include/lp_rv32.h` (compiles for GDS and SIM), `tb/memmap.py`.
+      PMU registers come from `vendor/pmu/regmap.yaml` (P2 `5fe30e0`, provisional, D-009).
+- [x] **Gate: owner confirmed the spec** (D-007, all items unchanged). Committed, pushed, Phase 0+1 PR opened.
 
 ## Phase 2 — Core and RVFI
 - [ ] Vendor P1 ALU (`prefix-adder-alu-sky130` main, pinned hash, recommended adder) → `vendor/VENDOR.md`.
