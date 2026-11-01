@@ -1,0 +1,275 @@
+# Single source of the lp-rv32 memory map (docs/BRIEF.md A3, A7 "MEMORY_MAP.md (generated)").
+# scripts/gen_memmap.py turns this into docs/MEMORY_MAP.md, sw/include/lp_rv32.h and tb/memmap.py.
+#   python3 scripts/gen_memmap.py           # write all outputs
+#   python3 scripts/gen_memmap.py --check   # exit 1 if any output is stale
+#
+# Regions: base, size (bytes, per memory configuration), which bus ports can reach them, domain.
+# Peripherals: one 4 KB APB slot each. Registers: access RO / RW / W1C / WO; fields as in P2's
+# regmap.yaml (name, bits [msb, lsb], reset, desc). Unlisted bits read 0 and ignore writes.
+# A peripheral with `import:` takes its registers from that YAML file instead (the PMU).
+# Any address not listed returns an error response: an access fault on the core (SPEC §6.3).
+#
+# Enum keys must be quoted strings ('ON', 'OFF'): YAML 1.1 reads bare ON/OFF/YES/NO as booleans.
+
+device: lp_rv32
+data_width: 32
+configs:
+  GDS: "2 x sky130_sram_1kbyte_1rw1r_32x256_8 (1 KB IMEM + 1 KB DMEM); used for the layout"
+  SIM: "behavioural memories with the same 1rw1r interface, 32 KB each; used for CoreMark and arch tests"
+
+regions:
+  - name: BOOTROM
+    base: 0x00000000
+    size: {GDS: 256, SIM: 256}
+    ports: [I, D]
+    access: RX
+    domain: CORE
+    desc: Boot ROM (synthesised logic). Reset vector. Holds the boot loader (SPEC §7).
+  - name: IMEM
+    base: 0x10000000
+    size: {GDS: 1024, SIM: 32768}
+    ports: [I, D]
+    access: RWX
+    domain: MEM
+    desc: Instruction memory. Fetch uses SRAM port 1 (read-only); data loads/stores use port 0.
+  - name: DMEM
+    base: 0x20000000
+    size: {GDS: 1024, SIM: 32768}
+    ports: [D]
+    access: RW
+    domain: MEM
+    desc: Data memory (data, stack). Not executable (fetch gives an instruction access fault).
+  - name: APB
+    base: 0x40000000
+    size: {GDS: 65536, SIM: 65536}
+    ports: [D]
+    access: RW
+    domain: mixed
+    desc: Peripheral window, 16 slots of 4 KB, through the bus-to-APB bridge. Word accesses only.
+
+peripherals:
+  - name: UART
+    base: 0x40000000
+    domain: PERI
+    irq: 0
+    desc: >-
+      16550-lite UART (feature set of a 16550 - programmable divisor, 8N1, 16-byte FIFOs, interrupts -
+      with a simpler register layout; not register-compatible). The RX start-bit wake detector is a
+      separate AON block (SPEC §8.4).
+    registers:
+      - name: DATA
+        addr: 0x000
+        access: RW
+        desc: Write pushes a byte into the TX FIFO (dropped if full, sets IRQ_STATUS.TX_OVF). Read pops the RX FIFO (0 if empty).
+        fields:
+          - {name: DATA, bits: [7, 0], reset: 0, desc: Byte.}
+      - name: STATUS
+        addr: 0x004
+        access: RO
+        desc: FIFO and line status.
+        fields:
+          - {name: TX_EMPTY, bits: [0, 0], reset: 1, desc: TX FIFO empty and shifter idle.}
+          - {name: TX_FULL, bits: [1, 1], reset: 0, desc: TX FIFO holds 16 bytes.}
+          - {name: RX_EMPTY, bits: [2, 2], reset: 1, desc: RX FIFO empty.}
+          - {name: RX_FULL, bits: [3, 3], reset: 0, desc: RX FIFO holds 16 bytes.}
+          - {name: TX_LEVEL, bits: [12, 8], reset: 0, desc: Bytes in the TX FIFO (0-16).}
+          - {name: RX_LEVEL, bits: [20, 16], reset: 0, desc: Bytes in the RX FIFO (0-16).}
+      - name: CTRL
+        addr: 0x008
+        access: RW
+        desc: Enables and FIFO flush.
+        fields:
+          - {name: TX_EN, bits: [0, 0], reset: 0, desc: Transmitter enabled.}
+          - {name: RX_EN, bits: [1, 1], reset: 0, desc: Receiver enabled.}
+          - {name: TX_FLUSH, bits: [2, 2], reset: 0, desc: Write 1 to empty the TX FIFO (reads 0).}
+          - {name: RX_FLUSH, bits: [3, 3], reset: 0, desc: Write 1 to empty the RX FIFO (reads 0).}
+          - {name: RX_THRESH, bits: [11, 8], reset: 0, desc: 'RX interrupt when RX_LEVEL > RX_THRESH.'}
+      - name: BAUD_DIV
+        addr: 0x00C
+        access: RW
+        desc: Bit period in clock cycles minus 1, for TX and RX. RX samples each bit at its middle (SPEC §8.1).
+        fields:
+          - {name: DIV, bits: [15, 0], reset: 0x01B1, desc: 'Reset 433 (bit period 434 cycles).'}
+      - name: IRQ_EN
+        addr: 0x010
+        access: RW
+        desc: Interrupt enables, same bit layout as IRQ_STATUS.
+        fields:
+          - {name: RX, bits: [0, 0], reset: 0, desc: ''}
+          - {name: TX, bits: [1, 1], reset: 0, desc: ''}
+          - {name: FRAME_ERR, bits: [2, 2], reset: 0, desc: ''}
+          - {name: RX_OVF, bits: [3, 3], reset: 0, desc: ''}
+          - {name: TX_OVF, bits: [4, 4], reset: 0, desc: ''}
+      - name: IRQ_STATUS
+        addr: 0x014
+        access: W1C
+        desc: 'RX and TX are levels (not clearable); error bits are sticky, write 1 to clear. irq = |(IRQ_STATUS & IRQ_EN).'
+        fields:
+          - {name: RX, bits: [0, 0], reset: 0, desc: 'Level: RX_LEVEL > CTRL.RX_THRESH.'}
+          - {name: TX, bits: [1, 1], reset: 1, desc: 'Level: TX FIFO empty.'}
+          - {name: FRAME_ERR, bits: [2, 2], reset: 0, desc: 'Sticky: a stop bit sampled 0 (the byte is dropped).'}
+          - {name: RX_OVF, bits: [3, 3], reset: 0, desc: 'Sticky: a byte arrived with the RX FIFO full (the byte is dropped).'}
+          - {name: TX_OVF, bits: [4, 4], reset: 0, desc: 'Sticky: DATA written with the TX FIFO full.'}
+
+  - name: GPIO
+    base: 0x40001000
+    domain: PERI
+    irq: 1
+    desc: 8-bit GPIO with a direction register and per-pin edge interrupts.
+    registers:
+      - name: IN
+        addr: 0x000
+        access: RO
+        desc: Pin levels after a 2-flop synchroniser.
+        fields:
+          - {name: IN, bits: [7, 0], reset: 0, desc: One bit per pin.}
+      - name: OUT
+        addr: 0x004
+        access: RW
+        desc: Output values (driven only where DIR=1).
+        fields:
+          - {name: OUT, bits: [7, 0], reset: 0, desc: One bit per pin.}
+      - name: DIR
+        addr: 0x008
+        access: RW
+        desc: Direction, 1 = output.
+        fields:
+          - {name: DIR, bits: [7, 0], reset: 0, desc: 'Reset: all inputs.'}
+      - name: RISE_EN
+        addr: 0x00C
+        access: RW
+        desc: Interrupt on a rising edge of IN.
+        fields:
+          - {name: EN, bits: [7, 0], reset: 0, desc: One bit per pin.}
+      - name: FALL_EN
+        addr: 0x010
+        access: RW
+        desc: Interrupt on a falling edge of IN.
+        fields:
+          - {name: EN, bits: [7, 0], reset: 0, desc: One bit per pin.}
+      - name: IRQ_STATUS
+        addr: 0x014
+        access: W1C
+        desc: Edge seen on an enabled pin; write 1 to clear. irq = |IRQ_STATUS.
+        fields:
+          - {name: PEND, bits: [7, 0], reset: 0, desc: One bit per pin.}
+
+  - name: TIMER
+    base: 0x40002000
+    domain: AON
+    irq: null
+    desc: >-
+      CLINT-style machine timer and software interrupt (privileged spec §3.2.1 and §3.1.9). Drives mip.MTIP
+      (mtime >= mtimecmp, unsigned 64-bit) and mip.MSIP directly, not through the IRQ controller.
+      Compact offsets (not the SiFive CLINT layout).
+    registers:
+      - name: MSIP
+        addr: 0x000
+        access: RW
+        desc: Machine software interrupt pending (mip.MSIP).
+        fields:
+          - {name: MSIP, bits: [0, 0], reset: 0, desc: ''}
+      - name: MTIMECMP_LO
+        addr: 0x008
+        access: RW
+        desc: mtimecmp[31:0].
+        fields:
+          - {name: VAL, bits: [31, 0], reset: 0xFFFFFFFF, desc: 'Reset all ones, so MTIP=0 after reset.'}
+      - name: MTIMECMP_HI
+        addr: 0x00C
+        access: RW
+        desc: mtimecmp[63:32].
+        fields:
+          - {name: VAL, bits: [31, 0], reset: 0xFFFFFFFF, desc: ''}
+      - name: MTIME_LO
+        addr: 0x010
+        access: RW
+        desc: mtime[31:0]. Increments by 1 every PRESCALE+1 cycles of the AON clock.
+        fields:
+          - {name: VAL, bits: [31, 0], reset: 0, desc: ''}
+      - name: MTIME_HI
+        addr: 0x014
+        access: RW
+        desc: mtime[63:32].
+        fields:
+          - {name: VAL, bits: [31, 0], reset: 0, desc: ''}
+      - name: PRESCALE
+        addr: 0x018
+        access: RW
+        desc: mtime tick divider.
+        fields:
+          - {name: DIV, bits: [15, 0], reset: 0, desc: '0 = mtime counts every clock.'}
+
+  - name: IRQC
+    base: 0x40003000
+    domain: CORE
+    irq: null
+    desc: Simple 8-source interrupt controller. mip.MEIP = |(PENDING & ENABLE). Sources are levels.
+    registers:
+      - name: PENDING
+        addr: 0x000
+        access: RO
+        desc: Current level of each source (0 UART, 1 GPIO, 2 PMU, 3-7 tied 0).
+        fields:
+          - {name: SRC, bits: [7, 0], reset: 0, desc: One bit per source.}
+      - name: ENABLE
+        addr: 0x004
+        access: RW
+        desc: Source enables.
+        fields:
+          - {name: EN, bits: [7, 0], reset: 0, desc: One bit per source.}
+
+  - name: SYSCTRL
+    base: 0x40004000
+    domain: AON
+    irq: null
+    desc: Boot and wake reason, scratch, boot strap (AON, survives DEEP_SLEEP).
+    registers:
+      - name: ID
+        addr: 0x000
+        access: RO
+        desc: Chip identification.
+        fields:
+          - {name: ID, bits: [31, 0], reset: 0x4C503332, desc: 'ASCII "LP32".'}
+      - name: RESET_CAUSE
+        addr: 0x004
+        access: W1C
+        desc: Why the core last left reset. Set by hardware; write 1 to clear.
+        fields:
+          - {name: COLD, bits: [0, 0], reset: 1, desc: Power-on / external reset (rst_n pin).}
+          - {name: WARM, bits: [1, 1], reset: 0, desc: Core domain powered up again by the PMU after DEEP_SLEEP (warm boot).}
+      - name: WAKE_SRC
+        addr: 0x008
+        access: W1C
+        desc: Which wake source(s) fired since last cleared (one bit per PMU wake_irq input). Write 1 to clear.
+        fields:
+          - {name: CORE_IRQ, bits: [0, 0], reset: 0, desc: 'wake_irq[0]: an enabled interrupt (mip & mie) while the core was clock-gated (IDLE).'}
+          - {name: UART_RX, bits: [1, 1], reset: 0, desc: 'wake_irq[1]: UART RX start bit (AON detector).'}
+          - {name: TIMER, bits: [2, 2], reset: 0, desc: 'wake_irq[2]: mtime >= mtimecmp.'}
+      - name: SCRATCH
+        addr: 0x00C
+        access: RW
+        desc: General-purpose AON storage; keeps its value across DEEP_SLEEP (not across cold reset).
+        fields:
+          - {name: VAL, bits: [31, 0], reset: 0, desc: ''}
+      - name: BOOT
+        addr: 0x010
+        access: RO
+        desc: Boot strap pin, sampled at cold reset.
+        fields:
+          - {name: SEL, bits: [0, 0], reset: 0, desc: '0 = boot ROM loads the program over UART; 1 = jump to IMEM (memory preloaded, simulation).'}
+      - name: UART_WAKE_EN
+        addr: 0x014
+        access: RW
+        desc: Enables the AON UART-RX start-bit detector (wake_irq[1]).
+        fields:
+          - {name: EN, bits: [0, 0], reset: 0, desc: ''}
+
+  - name: PMU
+    base: 0x40005000
+    domain: AON
+    irq: 2
+    import: vendor/pmu/regmap.yaml
+    desc: >-
+      P2 power-management unit (soc-pmu-sequencer / multipower). Register map imported from its YAML
+      (provisional copy pinned in vendor/VENDOR.md until P2 is merged).

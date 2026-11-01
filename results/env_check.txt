@@ -1,0 +1,38 @@
+# lp-rv32-mcu environment check (2026-11-01T08:48Z)
+ITEM                   STATUS   VERSION / PATH
+verilator              found    Verilator 5.050 2026-07-01 rev v5.050 (/foss/tools/bin/verilator)
+iverilog               found    Icarus Verilog version 14.0 (devel) (s20260301-391-g64f13540-dirty) (/foss/tools/bin/iverilog)
+yosys                  found    Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 13.3.0) (/foss/tools/bin/yosys)
+sby                    found    symbiyosys (/foss/tools/bin/sby)
+yosys-smtbmc           found    yosys-smtbmc (/foss/tools/bin/yosys-smtbmc)
+yices-smt2             found    Yices 2.7.0
+boolector              absent   -
+bitwuzla               absent   -
+z3                     absent   -
+riscv-gcc              found    riscv64-unknown-elf-gcc () 16.1.0 (/foss/tools/bin/riscv64-unknown-elf-gcc)
+rv32i_zicsr_zbb build  found    links with -march=rv32i_zicsr_zbb -mabi=ilp32; cpop instructions emitted: 1
+spike                  found    Spike RISC-V ISA Simulator 1.1.1-dev (/foss/tools/bin/spike)
+sail_riscv_sim         found    0.16 (/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/sail/sail-riscv-Linux-x86_64/bin/sail_riscv_sim)
+riscof                 found    RISC-V Architectural Test Framework., version 1.25.3 (/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/.venv-riscof/bin/riscof)
+riscv-formal           found    c992aa61fdfe0846c5ed90324c596202a1c69b76 2026-07-16 c992aa6 (/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-formal)
+riscv-arch-test        found    fc32e41d49480fd99ba0a192dfff9c3319b44873 2024-11-05 3.10.0 (/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/ext/riscv-arch-test)
+python3                found    Python 3.12.3 (/usr/bin/python3)
+cocotb                 found    2.0.1 (/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/.venv/bin/python)
+cocotb-coverage        found    2.0 (/foss/projects/Single-Cycle-4-bit-RISC-Core-with-UART-Peripheral/.venv/bin/python)
+librelane              found    3.1.0.dev3 (/foss/tools/bin/librelane)
+openroad               found    26Q3-1621-g21512b0ab  (/foss/tools/bin/openroad)
+sta                    found    3.1.0 (/foss/tools/bin/sta)
+magic                  found    8.3.681 (/foss/tools/bin/magic)
+netgen                 found    Netgen 1.5.323 compiled on Tue Aug 25 11:33:45 AM CEST 2026 (/foss/tools/bin/netgen)
+klayout                found    KLayout 0.30.11 (/foss/tools/klayout/klayout)
+sky130A PDK            found    /foss/pdks/sky130A (PDK=sky130A, SCL=sky130_fd_sc_hd)
+ICG cells (hd, tt)     found    dlclkp_1 dlclkp_2 dlclkp_4 
+sram gds               found    /foss/pdks/sky130A/libs.ref/sky130_sram_macros/gds/sky130_sram_1kbyte_1rw1r_32x256_8.gds
+sram lef               found    /foss/pdks/sky130A/libs.ref/sky130_sram_macros/lef/sky130_sram_1kbyte_1rw1r_32x256_8.lef
+sram verilog           found    /foss/pdks/sky130A/libs.ref/sky130_sram_macros/verilog/sky130_sram_1kbyte_1rw1r_32x256_8.v
+sram spice             found    /foss/pdks/sky130A/libs.ref/sky130_sram_macros/spice/sky130_sram_1kbyte_1rw1r_32x256_8.spice
+sram maglef            found    /foss/pdks/sky130A/libs.ref/sky130_sram_macros/maglef/sky130_sram_1kbyte_1rw1r_32x256_8.mag
+sram lib               found    /foss/pdks/sky130A/libs.ref/sky130_sram_macros/lib/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib
+sram lib corners       note     1 liberty corner(s) for sky130_sram_1kbyte_1rw1r_32x256_8; see docs/AUDIT.md
+
+RESULT: all required tools found
