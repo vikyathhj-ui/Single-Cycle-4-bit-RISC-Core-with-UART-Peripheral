@@ -1,0 +1,20 @@
+{
+  "tool": "riscv-formal",
+  "riscv_formal_commit": "c992aa61fdfe0846c5ed90324c596202a1c69b76",
+  "config": "formal/checks.cfg",
+  "solver": "yices",
+  "subset": "^reg_ch0$",
+  "depth_overrides": [
+    "reg=5,12"
+  ],
+  "wall_seconds": 30.5,
+  "counts": {
+    "PASS": 1
+  },
+  "checks": {
+    "reg_ch0": {
+      "status": "PASS",
+      "depth": 13
+    }
+  }
+}

@@ -1,0 +1,4 @@
+depth 12 exit 0
+depth 14 exit 0
+depth 16 exit 124
+depth 18 exit 124

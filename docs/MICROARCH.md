@@ -195,5 +195,7 @@ The brief asks for 3 stages to be justified against 2 and 5, with area and CPI d
   - Defines: `RISCV_FORMAL_ALIGNED_MEM`.
 - **Depths** are set from measured run times. Every check's depth and result is reported in
   `results/formal/summary.json`, and counterexamples go to `results/formal_cex/`.
+  - Phase 2 result: 79/79 PASS (docs/VERIFICATION.md §2).
+  - `reg` runs at a lower depth (D-012).
 - **Wrapper:** `formal/wrapper.sv` connects the core's I/D ports to unconstrained memories, as the
   riscv-formal examples do, and holds the Q-Channel inactive (`QREQn`=1).

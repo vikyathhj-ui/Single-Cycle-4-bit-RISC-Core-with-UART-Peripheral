@@ -37,3 +37,36 @@ entries.
 - **Generated register maps.** One YAML file produces the doc, the C header and the Python dict, so
   they cannot drift apart. P2's bug (`ON`/`OFF` read as booleans by YAML 1.1) is a good example of
   why the generator checks its input (D-009).
+
+## Phase 2
+- **What RVFI is.** RVFI is a set of extra output ports on the core (`rtl/core/lp_rv32_core.sv`,
+  under `` `ifdef RISCV_FORMAL ``). Each time an instruction retires, the core reports:
+  - the instruction and its pc before and after;
+  - which registers it read and the values it saw;
+  - what it wrote, and any memory access.
+
+  riscv-formal compares that report against its own model of each instruction
+  (`ext/riscv-formal/insns/insn_*.v`). The core's pipeline is never looked at: only what it
+  claims each instruction did.
+- **What the checks prove, roughly:**
+  - `insn_*`: every instruction of that kind computes the right result.
+  - `reg`: the value an instruction reads equals the value the last writer wrote. This catches
+    forwarding and stall bugs.
+  - `pc_fwd` / `pc_bwd`: each instruction starts where the previous one said it would go.
+  - `causal`, `unique`: retire order is consistent, and no instruction number is used twice.
+  - `liveness`: the core keeps making progress.
+  - `csrw`, `csr_ill`, `csrc_upcnt`: CSR read/write semantics, illegal CSR addresses trap, and
+    the counters go up.
+- **Bounded means "up to N cycles after reset".**
+  - A pass at depth 20 means no bug can show up within 20 cycles of reset, for *any* instruction
+    stream and any memory/interrupt behaviour.
+  - That is strong for pipeline bugs, which need only a few instructions to trigger. It says
+    nothing about longer sequences.
+- **Formal found a real bug at depth 11 (DECISIONS, Bug 01).** A misaligned store that depended on
+  a load right before it was allowed to skip the load-use stall, because it was going to trap
+  anyway. But the trap decision itself used the stale register.
+  - The simulation tests planned for later would only catch this if someone happened to write
+    that exact sequence.
+- **Why the core needs no state for a stalled instruction.** The SRAM drops its output after one
+  cycle. So when ID/EX stalls, the core simply fetches the same address again, and every
+  decision in ID/EX is recomputed from scratch each cycle.

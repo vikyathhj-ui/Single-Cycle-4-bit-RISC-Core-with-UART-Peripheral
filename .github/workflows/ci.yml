@@ -1,0 +1,66 @@
+# CI for lp-rv32-mcu (docs/BRIEF.md A7): lint, generated-file staleness and a reduced-depth
+# riscv-formal run. Unit tests and the `hello` system test join in Phases 3-4. The full-depth
+# formal run and the LibreLane flow run locally in the iic-osic container (results committed).
+#
+# Tools: YosysHQ OSS CAD Suite (Yosys + yosys-slang, SymbiYosys, yices, Verilator), pinned to a
+# dated release, so versions differ from the local image (same choice as P1, its D-020).
+# riscv-formal is cloned at the commit recorded in results/env_check.txt.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  RISCV_FORMAL_COMMIT: c992aa61fdfe0846c5ed90324c596202a1c69b76
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: "3.12"
+
+      - uses: YosysHQ/setup-oss-cad-suite@c7845bc0d335c8076aa22047e85972caa8a916df  # v4
+        with:
+          version: "2026-10-14"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Python packages
+        run: python -m pip install pyyaml
+
+      - name: riscv-formal checkout (pinned)
+        run: |
+          git clone -q https://github.com/YosysHQ/riscv-formal ext/riscv-formal
+          git -C ext/riscv-formal checkout -q "$RISCV_FORMAL_COMMIT"
+
+      - name: Tool versions
+        run: |
+          python --version
+          verilator --version
+          yosys -V
+          sby --version
+          yosys -p "plugin -i slang; help read_slang" 2>&1 | grep -m1 -i slang
+
+      - name: Memory map outputs are up to date
+        run: make memmap-check
+
+      - name: Lint (verilator -Wall, normal + RVFI build)
+        run: make lint
+
+      - name: riscv-formal (depth capped at 10)
+        run: make formal-quick
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: ci-results
+          path: results/
