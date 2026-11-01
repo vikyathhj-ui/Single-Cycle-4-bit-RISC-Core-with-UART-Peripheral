@@ -1,0 +1,72 @@
+# Legacy probe (2026-11-01T08:48Z), Icarus Verilog version 14.0 (devel) (s20260301-391-g64f13540-dirty)
+
+## L1. Legacy testbench as shipped (legacy/RISC_UART_TOP_tb.v)
+Lines that check or print anything ($display/$monitor/$error/if/assert/===/!==): 0
+Stimulus statements:
+10:    reg  RST = 1'b1; // Start in reset
+14:    always #((CLK_PERIOD)/2) CLK = ~CLK;
+27:        RST = 1'b1;
+28:        #100;
+31:        RST = 1'b0;
+36:        #1000000; 
+39:        $stop;
+Simulator output of the shipped testbench (everything it prints):
+  | legacy/RISC_UART_TOP_tb.v:39: $stop called at 1000100 (1s)
+
+## L2. Program in the ROM: comments vs the ControlUnit decode table
+ControlUnit opcode table:
+35:            3'b000: begin
+41:            3'b001: begin
+47:            3'b010: begin
+53:            3'b011: begin
+ROM initialisation (with the original comments):
+13:        ROM[0] = 8'h0D; // LOADI R1, 5
+14:        ROM[1] = 8'h16; // LOADI R2, 6
+15:        ROM[2] = 8'h5C; // ADD R1, R2
+16:        ROM[3] = 8'h98; // OUT R1 (Start TX)
+17:        ROM[4] = 8'hC3; // JUMP 3 (Loop)
+19:        ROM[5] = 8'h00; 
+20:        ROM[6] = 8'h00; 
+ROM entries initialised: 7 of 32 (array 'reg [7:0] ROM [0:31]')
+
+## L3. Audit probe (legacy/tb_probe.v), same clock/reset/run length as the shipped testbench
+PROBE P1 ROM decode (ControlUnit opcode = instr[7:5]):
+PROBE P1 ROM[0] = 8'h0d -> opcode 000 = LOADI  rd/rs=[4:3]=1 imm/addr=[4:0]=13
+PROBE P1 ROM[1] = 8'h16 -> opcode 000 = LOADI  rd/rs=[4:3]=2 imm/addr=[4:0]=22
+PROBE P1 ROM[2] = 8'h5c -> opcode 010 = OUT  rd/rs=[4:3]=3 imm/addr=[4:0]=28
+PROBE P1 ROM[3] = 8'h98 -> opcode 100 = NOP  rd/rs=[4:3]=3 imm/addr=[4:0]=24
+PROBE P1 ROM[4] = 8'hc3 -> opcode 110 = NOP  rd/rs=[4:3]=0 imm/addr=[4:0]=3
+PROBE P1 ROM[5] = 8'h00 -> opcode 000 = LOADI  rd/rs=[4:3]=0 imm/addr=[4:0]=0
+PROBE P1 ROM[6] = 8'h00 -> opcode 000 = LOADI  rd/rs=[4:3]=0 imm/addr=[4:0]=0
+PROBE P1 ROM[7] = 8'hxx -> opcode xxx = NOP  rd/rs=[4:3]=x imm/addr=[4:0]=x
+PROBE P2 cycle 1: PC=0 instr=8'h0d op=LOADI R0=0 R1=0 R2=0 R3=0 TX_Start=0
+PROBE P2 cycle 2: PC=1 instr=8'h16 op=LOADI R0=0 R1=5 R2=0 R3=0 TX_Start=0
+PROBE P2 cycle 3: PC=2 instr=8'h5c op=OUT R0=0 R1=5 R2=6 R3=0 TX_Start=1
+PROBE P2 cycle 4: PC=3 instr=8'h98 op=NOP R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P2 cycle 5: PC=4 instr=8'hc3 op=NOP R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P2 cycle 6: PC=5 instr=8'h00 op=LOADI R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P2 cycle 7: PC=6 instr=8'h00 op=LOADI R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P2 cycle 8: PC=7 instr=8'hxx op=NOP R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P2 cycle 9: PC=8 instr=8'hxx op=NOP R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P2 cycle 10: PC=9 instr=8'hxx op=NOP R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P2 cycle 11: PC=10 instr=8'hxx op=NOP R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P2 cycle 12: PC=11 instr=8'hxx op=NOP R0=0 R1=5 R2=6 R3=0 TX_Start=0
+PROBE P3 cycles after reset: 50000
+PROBE P3 cycles with TX_Start=1: 1563
+PROBE P3 TX_Start=1 cycles that coincide with clk_enable in IDLE: 0
+PROBE P4 UART start bits on TX_PIN in 1 ms: 0
+PROBE P4 final registers: R0=0 R1=5 R2=6 R3=0
+
+## L4. UART framing and baud constants (legacy/UART_TX.v)
+8:    input wire [3:0] TX_Data_In, // 4-bit data from RISC core
+25:    localparam BAUD_DIVIDER = 13'd5207; // Counts from 0 to 5207 (5208 total cycles)
+55:        end else if (clk_enable) begin // Only update state on the slow clock pulse
+59:                    if (TX_Start) begin // Check if CPU wants to send
+60:                        data_buffer <= TX_Data_In; // Load data
+75:                    if (bit_count == 3) begin // Sent 4 data bits (0, 1, 2, 3)
+bit period = 5208 cycles; at the 50 MHz clock in legacy/RISC_UART_TOP_tb.v (CLK_PERIOD=20 ns): 9600.6 baud
+
+## L5. Target device of the Quartus project (legacy/uuart.qsf)
+40:set_global_assignment -name FAMILY "MAX 10"
+41:set_global_assignment -name DEVICE 10M50DAF484C7G
+42:set_global_assignment -name TOP_LEVEL_ENTITY RISC_UART_TOP

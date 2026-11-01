@@ -1,0 +1,6 @@
+lp-rv32-mcu
+Copyright 2026 Vikyath J
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+Code under legacy/ predates this rework and is kept for history.
+Third-party code under vendor/ keeps the licence recorded in vendor/VENDOR.md.
