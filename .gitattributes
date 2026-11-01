@@ -2,3 +2,4 @@
 *.gds binary
 *.png binary
 *.svg text
+*.py linguist-detectable=false
