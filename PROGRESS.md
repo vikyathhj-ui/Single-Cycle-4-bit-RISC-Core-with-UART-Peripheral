@@ -3,18 +3,17 @@
 Single source of truth for status. Update this before every commit.
 Spec: `docs/BRIEF.md`. Branch: `rework/lp-rv32`. PRs target `main`.
 
-**Current state (2026-11-02): Phase 3 IN PROGRESS (not at its gate).**
-- Phases 0–2 are merged (PR #1, PR #2). P2 is merged, and its PMU is vendored at `a87ba58` (D-014).
-- Done in Phase 3 so far:
-  - RISCOF with Spike (D-013): 65/65 PASS. 7 tests NOT RUN (too big for the 32 KB SIM config,
-    D-015) and 41 PMP tests N/A. The mutation check proves the flow can fail (D-017).
-  - SoC blocks written so far: `rtl/soc/` `mem_1rw1r_sim`, `lp_rv32_xbar`, `apb_bridge`.
-- Next:
-  1. Peripherals: UART (16550-lite), TIMER, GPIO, IRQC, SYSCTRL, UART-RX wake detector, boot ROM,
-     power-switch model.
-  2. `lp_rv32_soc` top with the vendored PMU.
-  3. cocotb unit tests with coverage (UART baud/FIFO/framing, timer, GPIO, crossbar, APB bridge).
-  4. Lint the SoC, `make unit`, docs, commit, PR.
+**Current state (2026-11-02): Phase 3 DONE (gate met). Next: Phase 4 (software + system tests).**
+- Phases 0–2 merged (PR #1, #2). Phase 3 committed on `rework/lp-rv32`. Per the brief, the next PR
+  opens after Phase 4.
+- Phase 4 resume point:
+  1. `sw/`: linker scripts (GDS, SIM), crt0, HAL (UART, timer, GPIO, PMU), the real boot loader
+     (`sw/boot/`, replaces the stub, D-020), and the programs hello, irq_test, sleep_demo,
+     zbb_bench, coremark.
+  2. cocotb system tests with a UART monitor/driver and power-aware checks (see P2's
+     `tb/domain_shell.sv` for the corruption model).
+  3. CoreMark in the SIM config.
+  4. Stage-count CPI data (MICROARCH §9).
 
 ## Phase 0 — Setup
 - [x] Environment check: `scripts/env_check.sh` → `results/env_check.txt`. All found (RESULT line).
@@ -58,14 +57,17 @@ Spec: `docs/BRIEF.md`. Branch: `rework/lp-rv32`. PRs target `main`.
 
 ## Phase 3 — Compliance and SoC
 - [x] PMU vendored from `soc-pmu-sequencer` master `a87ba58` (14 files byte-identical; regmap unchanged, D-014).
-- [x] RISCOF (`riscof/`, `scripts/run_riscof.py`, `make riscof`):
-  - Spike reference (D-013); `-mno-relax` (D-016);
-  - testbench `tb/arch/tb_arch.sv` (IMEM at 0x8000_0000 for Spike, D-015);
-  - result: **65 PASS / 0 FAIL**, 7 NOT RUN (too big), 41 N/A (PMP) (`results/riscof/summary.json`);
-  - mutation check (D-017).
-- [ ] Peripherals + SoC top (`rtl/periph/`, `rtl/soc/lp_rv32_soc.sv`), Verilator lint clean.
-- [ ] cocotb unit tests + coverage: UART, timer, GPIO, crossbar, APB bridge.
-- [ ] Gate: arch tests pass and unit tests pass. Commit, push.
+- [x] RISCOF (`make riscof`): **65 PASS / 0 FAIL**, 7 NOT RUN (too big for 32 KB, D-015), 41 N/A (PMP).
+      Spike reference (D-013), `-mno-relax` (D-016), mutation check (D-017).
+- [x] SoC RTL:
+  - `rtl/soc/`: xbar, APB bridge, boot ROM (stub, D-020), SIM memory, Q-Channel stub, switch
+    model, `lp_rv32_soc`;
+  - `rtl/periph/`: UART, GPIO, TIMER, IRQC, SYSCTRL, UART wake.
+  - Lint clean (`make lint`), D-018, D-021.
+- [x] cocotb unit tests (`make unit`): **26/26 PASS**, coverage 100 % of 100 bins (uart 27, timer 8,
+      gpio 26, xbar 39) plus the SoC smoke test. Xbar mutation check (D-019).
+- [x] CI: unit tests added.
+- [x] **Gate:** arch tests pass and unit tests pass. Committed.
 
 ## Phase 4 — Software and system tests
 ## Phase 5 — Physical

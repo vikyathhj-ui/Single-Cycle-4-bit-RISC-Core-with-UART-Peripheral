@@ -1,0 +1,44 @@
+{
+  "xbar.apb.wait": {
+    "size": 4,
+    "hits": 4,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "xbar.d.op": {
+    "size": 2,
+    "hits": 2,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "xbar.d.outcome": {
+    "size": 2,
+    "hits": 2,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "xbar.d.region": {
+    "size": 8,
+    "hits": 8,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "xbar.d.region_x_op": {
+    "size": 16,
+    "hits": 16,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "xbar.event": {
+    "size": 4,
+    "hits": 4,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "xbar.i.region": {
+    "size": 3,
+    "hits": 3,
+    "percent": 100.0,
+    "missed_bins": []
+  }
+}

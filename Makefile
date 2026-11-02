@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
-.PHONY: help env legacy-probe memmap memmap-check lint formal formal-quick tb-arch tb-arch-trace riscof clean
+.PHONY: help env legacy-probe memmap memmap-check lint formal formal-quick tb-arch tb-arch-trace riscof unit bootrom clean
 
 help:
 	@echo "make env           tool table -> results/env_check.txt (fails if anything is missing)"
@@ -17,6 +17,8 @@ help:
 	@echo "make formal-quick  riscv-formal, depths capped at 10 (CI) -> results/formal/summary_quick.json"
 	@echo "make tb-arch       build the RISCOF DUT testbench (Verilator) -> sim_build/tb_arch/tb_arch"
 	@echo "make riscof        riscv-arch-test 3.10.0 via RISCOF, Spike reference -> results/riscof/"
+	@echo "make unit          cocotb unit tests (uart, timer, gpio, xbar+bridge, soc smoke) -> results/unit/summary.json"
+	@echo "make bootrom       rtl/soc/bootrom_image.svh from sw/boot (scripts/gen_bootrom.py)"
 	@echo "make clean         remove sim_build/"
 
 env:
@@ -53,6 +55,15 @@ tb-arch-trace:
 
 riscof: tb-arch
 	python3 scripts/run_riscof.py
+
+.venv/bin/python:
+	python3 -m venv --system-site-packages .venv && .venv/bin/pip install cocotb-coverage==2.0
+
+unit: .venv/bin/python
+	.venv/bin/python scripts/run_unit.py
+
+bootrom:
+	python3 scripts/gen_bootrom.py
 
 clean:
 	rm -rf sim_build

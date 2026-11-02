@@ -1,0 +1,86 @@
+{
+  "_simulator": "Verilator 5.050 2026-07-01 rev v5.050",
+  "gpio": {
+    "coverage_bins": {
+      "hit": 26,
+      "total": 26
+    },
+    "coverage_file": "results/coverage/gpio.json",
+    "coverage_percent": 100.0,
+    "log": "sim_build/unit/gpio/test.log",
+    "tests": {
+      "test_apb_errors": "PASS",
+      "test_edge_interrupts": "PASS",
+      "test_input_sync_latency": "PASS",
+      "test_reset_and_outputs": "PASS",
+      "test_set_wins_over_clear": "PASS",
+      "test_zz_coverage_export": "PASS"
+    },
+    "top": "gpio8"
+  },
+  "soc": {
+    "coverage_bins": null,
+    "coverage_file": null,
+    "coverage_percent": null,
+    "log": "sim_build/unit/soc/test.log",
+    "tests": {
+      "test_boot_and_uart_ok": "PASS"
+    },
+    "top": "soc_tb"
+  },
+  "timer": {
+    "coverage_bins": {
+      "hit": 8,
+      "total": 8
+    },
+    "coverage_file": "results/coverage/timer.json",
+    "coverage_percent": 100.0,
+    "log": "sim_build/unit/timer/test.log",
+    "tests": {
+      "test_compare_and_carry": "PASS",
+      "test_msip_and_errors": "PASS",
+      "test_prescale_rate": "PASS",
+      "test_reset_values": "PASS",
+      "test_safe_cmp_update": "PASS",
+      "test_zz_coverage_export": "PASS"
+    },
+    "top": "timer_clint"
+  },
+  "uart": {
+    "coverage_bins": {
+      "hit": 27,
+      "total": 27
+    },
+    "coverage_file": "results/coverage/uart.json",
+    "coverage_percent": 100.0,
+    "log": "sim_build/unit/uart/test.log",
+    "tests": {
+      "test_apb_errors": "PASS",
+      "test_flush": "PASS",
+      "test_framing_error": "PASS",
+      "test_interrupts": "PASS",
+      "test_reset_values": "PASS",
+      "test_rx_fifo_full_overflow": "PASS",
+      "test_rx_glitch_rejected": "PASS",
+      "test_rx_with_skew": "PASS",
+      "test_tx_baud_accuracy": "PASS",
+      "test_tx_fifo_full_empty_overflow": "PASS",
+      "test_zz_coverage_export": "PASS"
+    },
+    "top": "uart_lite"
+  },
+  "xbar": {
+    "coverage_bins": {
+      "hit": 39,
+      "total": 39
+    },
+    "coverage_file": "results/coverage/xbar.json",
+    "coverage_percent": 100.0,
+    "log": "sim_build/unit/xbar/test.log",
+    "tests": {
+      "test_random_traffic": "PASS",
+      "test_zz_coverage_export": "PASS"
+    },
+    "top": "xbar_tb"
+  }
+}

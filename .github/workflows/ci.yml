@@ -1,6 +1,6 @@
-# CI for lp-rv32-mcu (docs/BRIEF.md A7): lint, generated-file staleness and a reduced-depth
-# riscv-formal run. Unit tests and the `hello` system test join in Phases 3-4. The full-depth
-# formal run and the LibreLane flow run locally in the iic-osic container (results committed).
+# CI for lp-rv32-mcu (docs/BRIEF.md A7): lint, generated-file staleness, cocotb unit tests and a
+# reduced-depth riscv-formal run. The `hello` system test joins in Phase 4. RISCOF (needs Spike) The full-depth
+# runs locally, as do the full-depth formal run and the LibreLane flow (results committed).
 #
 # Tools: YosysHQ OSS CAD Suite (Yosys + yosys-slang, SymbiYosys, yices, Verilator), pinned to a
 # dated release, so versions differ from the local image (same choice as P1, its D-020).
@@ -34,7 +34,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Python packages
-        run: python -m pip install pyyaml
+        run: python -m pip install pyyaml cocotb==2.0.1 cocotb-coverage==2.0
+
+      - name: RISC-V GCC (Ubuntu package; builds the SoC smoke program)
+        run: sudo apt-get update && sudo apt-get install -y gcc-riscv64-unknown-elf
 
       - name: riscv-formal checkout (pinned)
         run: |
@@ -54,6 +57,11 @@ jobs:
 
       - name: Lint (verilator -Wall, normal + RVFI build)
         run: make lint
+
+      - name: Unit tests (cocotb, Verilator)
+        run: |
+          python -m venv --system-site-packages .venv
+          make unit
 
       - name: riscv-formal (depth capped at 10)
         run: make formal-quick

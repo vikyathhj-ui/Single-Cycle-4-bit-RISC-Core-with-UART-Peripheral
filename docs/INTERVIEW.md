@@ -89,6 +89,29 @@ Answers are filled in as each phase produces evidence. Numbers are copied only f
     result within 30 min at 17 or 19 (D-012). So `reg` runs at 15 and the rest at their configured
     depths. Longer sequences are covered by the arch and system tests.
 
+## Verification layers (Phase 3)
+15. **Q: riscv-formal, arch tests and system tests: what does each find?**
+    A:
+    - **riscv-formal** proves that every instruction and short sequence is right, for *any* input,
+      up to a bound (79/79 checks, `results/formal/summary.json`). It found Bug 01.
+    - **Arch tests** run whole programs and compare memory signatures with Spike. 65 PASS
+      (`results/riscof/summary.json`). They cover trap handlers and CSRs that formal skipped here.
+    - **System tests** (Phase 4) run real firmware on the whole SoC.
+    The layers overlap on purpose.
+16. **Q: Your arch-test report has "NOT RUN" entries. Why?**
+    A: Seven tests (the six branch tests and jal-01) need more than the 32 KB simulation memory. The
+    largest overflows by 1,723,488 bytes. The owner chose to run only what fits rather than add a
+    larger memory configuration (D-015). Branches and JAL are still proven by riscv-formal.
+17. **Q: How do you know a test can fail?**
+    A: Mutation checks:
+    - SLTU decoded as SLT makes `sltu-01` fail, with 183 of 724 words different.
+    - A bridge that drops a back-to-back request made the crossbar test fail only after I added a
+      response timeout. Before that it hung silently (D-019).
+18. **Q: What did the UART test measure for baud accuracy?**
+    A: Every transmitted bit is held for exactly BAUD_DIV+1 clock cycles, checked cycle by cycle on
+    `txd`, for divisors 1, 3, 15 and 433. The receiver also accepts frames with a bit period off by
+    ±3 % (`results/unit/summary.json`, `tb/unit/test_uart.py`).
+
 <!-- Topics still to cover (Part B rule 7): pipeline hazards and forwarding paths; load-use stall;
      branch penalty and CPI; trap entry/exit, mepc/mcause; WFI with interrupts disabled; warm boot vs
      retention; what RVFI checks and cannot; riscv-formal vs arch tests vs system tests; CoreMark/MHz

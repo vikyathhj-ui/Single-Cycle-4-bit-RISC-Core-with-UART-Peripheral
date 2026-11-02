@@ -70,3 +70,21 @@ entries.
 - **Why the core needs no state for a stalled instruction.** The SRAM drops its output after one
   cycle. So when ID/EX stalls, the core simply fetches the same address again, and every
   decision in ID/EX is recomputed from scratch each cycle.
+
+## Phase 3
+- **What arch tests add on top of formal.** riscv-formal checks single instructions and short
+  sequences. The arch tests run complete programs and compare the final memory "signature" with a
+  reference simulator (Spike), so trap handlers and CSR behaviour are covered too: the misaligned
+  and ECALL/EBREAK tests write mcause, mepc and mtval into the signature.
+- **Toolchain details matter.** Linker relaxation turned an alignment padding into a 2-byte c.nop,
+  which a core without the C extension cannot execute. The fix was `-mno-relax` for both sides
+  (D-016).
+- **A test that never fails proves nothing.** Two mutation checks:
+  - RISCOF failed on a planted SLTU bug, as it should.
+  - The crossbar test did *not* fail on a planted bridge bug at first, because it waited forever
+    for a response without complaining. Adding a timeout fixed the test (D-019).
+- **Isolation clamps choose a safe value per signal**, not always 0 (D-021). A powered-off UART's
+  TX pin must idle high. A powered-off APB slave must answer with an error, not hang the bus.
+- **Unit tests vs the SoC smoke test.** Each unit test checks one block against its register map.
+  The smoke test proves the blocks are wired together correctly: reset, PMU boot, ROM, IMEM, APB
+  and UART all have to work for "OK" to appear on the pin.

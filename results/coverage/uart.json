@@ -1,0 +1,32 @@
+{
+  "uart.byte": {
+    "size": 3,
+    "hits": 3,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "uart.event": {
+    "size": 9,
+    "hits": 9,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "uart.fifo_level": {
+    "size": 8,
+    "hits": 8,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "uart.rx.skew": {
+    "size": 3,
+    "hits": 3,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "uart.tx.div": {
+    "size": 4,
+    "hits": 4,
+    "percent": 100.0,
+    "missed_bins": []
+  }
+}
