@@ -1,5 +1,5 @@
 # CI for lp-rv32-mcu (docs/BRIEF.md A7): lint, generated-file staleness, cocotb unit tests and a
-# reduced-depth riscv-formal run. The `hello` system test joins in Phase 4. RISCOF (needs Spike) The full-depth
+# reduced-depth riscv-formal run and the `hello` system test. RISCOF (needs Spike) The full-depth
 # runs locally, as do the full-depth formal run and the LibreLane flow (results committed).
 #
 # Tools: YosysHQ OSS CAD Suite (Yosys + yosys-slang, SymbiYosys, yices, Verilator), pinned to a
@@ -62,6 +62,9 @@ jobs:
         run: |
           python -m venv --system-site-packages .venv
           make unit
+
+      - name: System test hello (firmware on the SoC)
+        run: make system-ci
 
       - name: riscv-formal (depth capped at 10)
         run: make formal-quick

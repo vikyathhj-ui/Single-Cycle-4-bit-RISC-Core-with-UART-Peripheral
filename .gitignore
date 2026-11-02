@@ -19,3 +19,6 @@ results.xml
 # SymbiYosys / riscv-formal work directories
 formal/work/
 formal/checks/
+
+# firmware build outputs (scripts/build_sw.py)
+sw/build/

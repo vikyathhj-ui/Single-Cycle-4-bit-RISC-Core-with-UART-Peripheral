@@ -1,6 +1,6 @@
 # Verification
 
-Status: **Phase 3: formal, lint, arch tests, unit tests.** System tests are added in Phase 4. Every number below is
+Status: **Phase 4: formal, lint, arch tests, unit tests, system tests.** Every number below is
 copied from a file under `results/`, and that file is named next to it.
 
 ## 1. Lint
@@ -136,3 +136,51 @@ counterexample is in `results/formal_cex/bug01_exc_ignores_load_use/`.
 
 **The xbar test can fail.** A bridge mutant that drops a request arriving in the response cycle is
 caught after D-019. The first version of the test missed it.
+
+## 5. System tests (firmware on the SoC)
+**Setup**
+- **Command:** `make system` (`scripts/run_system.py`) → `results/system/summary.json`.
+- **Testbench:** `tb/system/soc_sys_tb.sv` (Verilator, cocotb 2.0.1).
+- **Memory configuration:** SIM (32 KB + 32 KB).
+- **Firmware:** built by `scripts/build_sw.py` with `riscv64-unknown-elf-gcc 16.1.0`,
+  `-march=rv32i_zicsr_zbb -mabi=ilp32 -O2` (`results/sw/build_sim.json`).
+- **UART:** the testbench decodes and drives the UART at BAUD_DIV+1 = 8 cycles per bit, and 434
+  for the boot loader.
+
+**What each test checks** (all PASS)
+
+| Test | Program | What is checked |
+|---|---|---|
+| hello | `sw/hello` | Boot (BOOT.SEL=1), UART text, misa = 0x40000100, mhartid = 0, SYSCTRL ID, cold reset cause |
+| loader | `sw/boot/boot.S` + `sw/loader_payload` | BOOT.SEL=0: '>' prompt, 1,740-byte image over the UART at the reset divisor, echoed checksum 0x0001ebe5, the loaded program runs |
+| irq_test | `sw/irq_test` | WARL read-back of mstatus / mie / mtvec / mepc / mcause / misa; ECALL and illegal-instruction mcause and mtval; 3 timer, 1 software and 1 GPIO (IRQC) interrupt; priority MSI before MTI |
+| sleep_demo | `sw/sleep_demo` | IDLE + 2 × DEEP_SLEEP; see below |
+| zbb_bench | `sw/zbb_bench` | The same kernel with and without Zbb gives the same result (0x848a0121); cycle counts recorded |
+| coremark | EEMBC CoreMark (`sw/coremark`) | CRCs match EEMBC's known 2K-performance values; CoreMark/MHz recorded (D-025) |
+
+**sleep_demo: hardware-level checks** (independent of the firmware's output)
+- **Clock gating:** the CORE clock had **0** edges during the 2,952-cycle IDLE window in which the
+  PMU held `clk_en[CPU]` = 0. The firmware saw `mcycle` advance 160 while `mtime` advanced 3,112.
+- **Power-off:** in both DEEP_SLEEP power-off windows (2,704 and 3,312 cycles) there were **0**
+  violations: `iso_en[CPU]` stayed 1, and `uart_txd` stayed at its clamp value 1 while PERI was off.
+- **Corruption model:** it fired exactly once per DEEP_SLEEP per domain (`corrupt_core` =
+  `corrupt_peri` = 2). Both warm boots still ran correctly.
+- **Wake reasons and retention:**
+  - WAKE_SRC = 0x2 after the UART wake and 0x4 after the timer wake.
+  - The DMEM `.noinit` marker survived (MEM stays powered); the stage counter lived in SCRATCH (AON).
+
+**CoreMark** (RTL simulation, SIM configuration; not a valid published score, D-025)
+- **Result:** 10 iterations in 8,876,270 cycles → **1.1266 CoreMark/MHz**.
+- **Build:** GCC 16.1.0 `-march=rv32i_zicsr_zbb -mabi=ilp32 -O2`, data on the stack in DMEM.
+
+**zbb_bench** (256 words)
+
+| Build | Cycles | Instructions |
+|---|---|---|
+| without Zbb (`-march=rv32i_zicsr`, libgcc calls) | 25,912 | 22,594 |
+| with Zbb (cpop, clz, ctz, rev8, ror, minu, maxu, andn) | 4,897 | 4,636 |
+
+**Problems these tests found**
+- Software accessed PERI before it was powered (D-022).
+- The loader start-up race (D-023).
+- The simulator's missing reset edge (D-024).

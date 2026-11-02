@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the boot ROM image (docs/SPEC.md §7) and write rtl/soc/bootrom_image.svh.
 
-    python3 scripts/gen_bootrom.py [sw/boot/<file>.S]        (default: sw/boot/boot_stub.S)
+    python3 scripts/gen_bootrom.py [sw/boot/<file>.S]        (default: sw/boot/boot.S)
 
 Assembles and links the source at address 0 with riscv64-unknown-elf-gcc
 (-march=rv32i_zicsr_zbb -mabi=ilp32), extracts the binary and writes it as a SystemVerilog
@@ -14,7 +14,7 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-src = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO / "sw" / "boot" / "boot_stub.S"
+src = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO / "sw" / "boot" / "boot.S"
 words_max = 64
 with tempfile.TemporaryDirectory() as d:
     elf, binf = Path(d) / "boot.elf", Path(d) / "boot.bin"

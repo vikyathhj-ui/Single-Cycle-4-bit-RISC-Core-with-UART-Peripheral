@@ -65,7 +65,7 @@ def run_unit(name: str) -> dict:
         cov.unlink()
     runner = get_runner("verilator")
     runner.build(sources=[REPO / s for s in u["sources"]], hdl_toplevel=u["top"], build_dir=build,
-                 build_args=["-Wno-fatal", "--timing", f"-I{REPO / 'rtl' / 'soc'}"], always=True,
+                 build_args=["-Wno-fatal", "--timing", "--x-initial-edge", f"-I{REPO / 'rtl' / 'soc'}"], always=True,
                  log_file=build / "build.log", timescale=("1ns", "1ps"))
     plusargs = [f"+imem={build_program(u['program'], build)}"] if "program" in u else []
     xml = build / "results.xml"

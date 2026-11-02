@@ -64,3 +64,12 @@ cf7364e62bd6f41356bdf80895efe4850301a9d65682fb3a7c82ce1ba96ca450  vendor/alu/rtl
 9da8f6c44f7f30c67fcc7f62e6282e9eeb036e86b38b296e3493746f2d4174a1  vendor/alu/rtl/cpop.sv
 1fb7a0a4b868e5ef13fc6f8cd8be219978f903c438e17e05b3cc24b4b4b277fb  vendor/alu/rtl/shifter.sv
 ```
+
+## Third-party code outside `vendor/`
+- **`sw/coremark/`** (`core_portme.c`, `core_portme.h`, `ee_printf.c`):
+  - **Source:** EEMBC's CoreMark `barebones` porting files from `eembc/coremark` at
+    `1f483d5b8316753a742cbf5590caf5bd0a4e4777` (2025-05-01). Apache-2.0 headers are kept.
+  - **Changes:** made only where marked "lp_rv32 port", as CoreMark's porting rules allow (D-025).
+  - **Not copied:** the CoreMark core files. They are compiled unmodified from the git-ignored
+    `ext/coremark` checkout at the same commit (`git clone https://github.com/eembc/coremark
+    ext/coremark`). CoreMark® is a trademark of EEMBC.

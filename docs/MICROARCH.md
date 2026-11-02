@@ -170,20 +170,26 @@ Semantics are in SPEC §3. Read-only zeros are decoded so that reads succeed and
 | 0x323–0x33F | mhpmevent3–31 | — | none (RO-0, writes ignored) |
 | 0xF11–0xF15 | mvendorid, marchid, mimpid, mhartid, mconfigptr | — | read-only address: writes trap |
 
-## 9. Stage-count justification (data comes in Phase 2)
-The brief asks for 3 stages to be justified against 2 and 5, with area and CPI data. Plan:
-- **CPI:**
-  - Run the Phase 2/4 programs (zbb_bench, hello, the arch-test ELFs) and log, per retired
-    instruction, the hazard events that each pipeline depth would see: taken branches, load-use
-    distance-1 pairs, and distance-2 pairs.
-  - A script (`scripts/cpi_model.py`) computes the CPI that a 2-stage, 3-stage and 5-stage in-order
-    pipeline would have *for these traces* under stated penalty rules.
-  - The 3-stage figure is cross-checked against the real RTL cycle count.
-  - The 2- and 5-stage figures are labelled "trace-driven model", not measurements.
-- **Area:** Yosys `stat` of the 3-stage core gives the cells and flops of each pipeline register.
-  The extra register bits a 5-stage design needs are counted from the field widths, labelled as a
-  count, not a layout area.
-- The DECISIONS entry quotes only these script outputs.
+## 9. Stage-count justification (data: Phase 4, D-026)
+- **Hazard counts:** measured by `tb/system/soc_sys_tb.sv` from the RVFI retire stream of real
+  programs on this 3-stage RTL.
+- **Penalty rules:** stated in `scripts/cpi_model.py`:
+  - **2-stage:** +1 per load (the synchronous SRAM data arrives a cycle after EX) and +1 per taken
+    transfer.
+  - **3-stage:** +1 per taken transfer and +1 per distance-1 load-use.
+  - **5-stage:** +2 per taken transfer and +1 per distance-1 load-use.
+- **Results** (`results/cpi/cpi_model.json`, SIM configuration, RTL simulation):
+
+| Workload | Retired | Taken transfers | Loads | Load-use d1 | CPI 2-st (model) | CPI 3-st (model) | CPI 3-st (measured) | CPI 5-st (model) |
+|---|---|---|---|---|---|---|---|---|
+| CoreMark | 7209775 | 1506163 | 556880 | 221799 | 1.2861 | 1.2397 | 1.2408 | 1.4486 |
+| zbb_bench | 40810 | 7083 | 1677 | 341 | 1.2147 | 1.1819 | 1.2034 | 1.3555 |
+
+- **Model check:** the 3-stage model matches the measured cycle count to within 7,885 of 8,945,622
+  cycles on CoreMark.
+- **Area:** of the 3-stage core only. Yosys synthesis on sky130 tt gives 81,269.19 µm², 8,040 cells
+  and 1,430 flops (`results/area/core_yosys.json`, pre-layout). The 2- and 5-stage designs are not
+  built, so their area is not measured.
 
 ## 10. Formal plan (Phase 2)
 - **riscv-formal setup:**

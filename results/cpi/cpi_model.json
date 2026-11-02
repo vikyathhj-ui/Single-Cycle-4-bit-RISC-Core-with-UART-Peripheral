@@ -1,0 +1,63 @@
+{
+  "source": "results/system/summary.json (SIM memory configuration, RTL simulation)",
+  "workloads": {
+    "coremark": {
+      "stats": {
+        "ct_taken": 1506163,
+        "cycles": 8945622,
+        "load_use_d1": 221799,
+        "load_use_d2": 158525,
+        "loads": 556880,
+        "retired": 7209775
+      },
+      "model": {
+        "2-stage": {
+          "penalty_cycles": 2063043,
+          "cpi": 1.2861
+        },
+        "3-stage": {
+          "penalty_cycles": 1727962,
+          "cpi": 1.2397
+        },
+        "5-stage": {
+          "penalty_cycles": 3234125,
+          "cpi": 1.4486
+        },
+        "3-stage measured": {
+          "cycles": 8945622,
+          "cpi": 1.2408,
+          "other_stall_cycles": 7885
+        }
+      }
+    },
+    "zbb_bench": {
+      "stats": {
+        "ct_taken": 7083,
+        "cycles": 49111,
+        "load_use_d1": 341,
+        "load_use_d2": 1176,
+        "loads": 1677,
+        "retired": 40810
+      },
+      "model": {
+        "2-stage": {
+          "penalty_cycles": 8760,
+          "cpi": 1.2147
+        },
+        "3-stage": {
+          "penalty_cycles": 7424,
+          "cpi": 1.1819
+        },
+        "5-stage": {
+          "penalty_cycles": 14507,
+          "cpi": 1.3555
+        },
+        "3-stage measured": {
+          "cycles": 49111,
+          "cpi": 1.2034,
+          "other_stall_cycles": 877
+        }
+      }
+    }
+  }
+}

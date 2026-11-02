@@ -3,17 +3,15 @@
 Single source of truth for status. Update this before every commit.
 Spec: `docs/BRIEF.md`. Branch: `rework/lp-rv32`. PRs target `main`.
 
-**Current state (2026-11-02): Phase 3 DONE (gate met). Next: Phase 4 (software + system tests).**
-- Phases 0–2 merged (PR #1, #2). Phase 3 committed on `rework/lp-rv32`. Per the brief, the next PR
-  opens after Phase 4.
-- Phase 4 resume point:
-  1. `sw/`: linker scripts (GDS, SIM), crt0, HAL (UART, timer, GPIO, PMU), the real boot loader
-     (`sw/boot/`, replaces the stub, D-020), and the programs hello, irq_test, sleep_demo,
-     zbb_bench, coremark.
-  2. cocotb system tests with a UART monitor/driver and power-aware checks (see P2's
-     `tb/domain_shell.sv` for the corruption model).
-  3. CoreMark in the SIM config.
-  4. Stage-count CPI data (MICROARCH §9).
+**Current state (2026-11-02): Phase 4 DONE (gate met). Phase 3+4 PR opened. Next: Phase 5 (physical).**
+- Phase 5 resume point (LibreLane, sky130A, GDS memory configuration `LP_GDS`):
+  1. Flow config with the 2 SRAM macros: check LibreLane's macro variables in the installed
+     version, placement, halos, PDN over the macros.
+  2. Isolation and ICG cells (D-021 note).
+  3. Multi-corner STA with the TT-only SRAM liberty (S-10).
+  4. IR drop; activity power for active vs IDLE from VCDs of hello + sleep_demo; signoff.
+  5. `docs/FLOORPLAN.md`, `upf/lp_rv32.upf`.
+- INTERVIEW has 26 of the 40+ questions.
 
 ## Phase 0 — Setup
 - [x] Environment check: `scripts/env_check.sh` → `results/env_check.txt`. All found (RESULT line).
@@ -70,5 +68,18 @@ Spec: `docs/BRIEF.md`. Branch: `rework/lp-rv32`. PRs target `main`.
 - [x] **Gate:** arch tests pass and unit tests pass. Committed.
 
 ## Phase 4 — Software and system tests
+- [x] `sw/common`: crt0 (waits for PERI, D-022), linker scripts (SIM/GDS, `.noinit`), HAL;
+      `scripts/build_sw.py`.
+- [x] Boot ROM loader `sw/boot/boot.S` (prompt, D-023), 216 B.
+- [x] Programs: hello, loader_payload, irq_test, sleep_demo, zbb_bench, CoreMark (port in
+      `sw/coremark`, D-025).
+- [x] System tests (`make system`): **6/6 PASS**, including the power checks in sleep_demo.
+      `--x-initial-edge` (D-024).
+- [x] CoreMark **1.1266 CoreMark/MHz** (RTL simulation, SIM config, not a valid published score).
+- [x] zbb_bench: 25,912 vs 4,897 cycles.
+- [x] Stage-count CPI data (D-026) and core synthesis area. `results/summary.json` (`make summary`).
+- [x] CI: hello system test added. Docs: POWER.md, VERIFICATION §5, SPEC/MICROARCH updates.
+- [x] **Gate:** all pass, CoreMark/MHz recorded. Committed, PR opened.
+
 ## Phase 5 — Physical
 ## Phase 6 — Docs and close

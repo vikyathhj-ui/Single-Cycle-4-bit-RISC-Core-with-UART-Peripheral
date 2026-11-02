@@ -335,6 +335,101 @@ All options come from the installed framework (`ext/riscv-formal` at `c992aa6`, 
   `PMU_SKY130_CELLS`. P2 found that LibreLane excludes the `lpflow_*` isolation cells, so the
   Phase 5 configuration must handle the isolation cells.
 
+## D-022 — Software waits for PERI before touching the UART or GPIO (Phase 4)
+- **Found by:** the first `hello` system test printed nothing. The trace showed a store access
+  fault at cycle 79 on the first UART write (`sw a0,12(a5)` to 0x4000_000C).
+- **Cause:** the PMU powers the domains up one at a time, CPU before PERI (P2 inrush arbiter), so
+  the core runs before PERI is on. While PERI is isolated, its clamps answer every APB access with an
+  error, which is the intended behaviour (D-021). The Phase 3 smoke test only passed because of its
+  timing.
+- **Fix:** software rule, recorded in SPEC §7 and §8.1:
+  - `crt0` calls `hal_wait_peri()` before `main()`. It polls PMU `PD_STATE` until PERI is ON and
+    not busy.
+  - The boot ROM loader and `sw/tests/smoke.S` do the same before using the UART.
+- **Alternative (not taken):** a hardware stall of the core until all domains are up. This would
+  change the PMU's sequencing, which is P2's design.
+
+## D-023 — UART loader sends a '>' prompt before it accepts data (Phase 4)
+- **Found by:** the loader test. Its host sent the first length byte while PERI was still powering
+  up. The receiver was not enabled yet, so the length was decoded wrongly.
+- **Fix:** once the UART is enabled, the boot ROM writes '>'. The host waits for it before sending.
+  It costs 2 instructions; the ROM is 216 of 256 bytes.
+- **Result:** the prompt arrives 4,232 cycles after reset release (`results/system/summary.json`,
+  loader). That is the PERI power-up plus one frame at the reset divisor.
+
+## D-024 — Verilator `--x-initial-edge` for every simulation build (Phase 4)
+- **Symptom:** in the SoC, the first instruction retired at pc 0x4, not the reset vector.
+  - That made the boot ROM's `lw t0, 4(s0)` read through a stale `s0`, so the loader took the warm
+    path on a cold boot.
+  - A probe showed `id_pc` = 0 instead of `RESET_VEC − 4` after reset.
+- **Cause:** a simulation semantics issue, not an RTL bug.
+  - The core's flops are `always_ff @(posedge clk or negedge rst_n)`. In the SoC, `rst_n[CPU]` is
+    low from time 0, and the CORE clock is gated off during reset.
+  - Verilator's 2-state initial value (0) produces no `negedge` at time 0, so the reset branch never
+    ran.
+  - On silicon an asynchronous reset is level-sensitive. The arch testbench did not show this,
+    because its clock runs during reset.
+- **Fix:** `--x-initial-edge` ("Enable initial X->0 and X->1 edge triggers", `verilator --help`) in
+  `make tb-arch`, `scripts/run_unit.py` and `scripts/run_system.py`.
+  - After the fix the first retirement is pc 0x0 (`lui s0, 0x40004`).
+  - RISCOF was re-run with the rebuilt testbench.
+
+## D-025 — CoreMark: port, run length and labelling (Phase 4)
+- **Source:** EEMBC CoreMark, `eembc/coremark` at `1f483d5b` (2025-05-01), cloned into git-ignored
+  `ext/coremark`.
+  - The core files (`core_list_join.c`, `core_main.c`, `core_matrix.c`, `core_state.c`,
+    `core_util.c`, `coremark.h`) are compiled unmodified.
+  - The port in `sw/coremark/` is EEMBC's `barebones` porting files, changed only where marked
+    "lp_rv32 port": the timer is `mcycle`, the UART uses the HAL, there are no float or time.h, and
+    `DONE` is printed at the end. This follows the CoreMark rule that only porting files may change.
+- **Time base:** `EE_TICKS_PER_SEC` = 1,000,000 cycles, so CoreMark's printed Iterations/Sec equals
+  CoreMark/MHz.
+  - The reported figure is computed by the test from the printed "Iterations" and "Total ticks":
+    10 × 10^6 / 8,876,270 = **1.1266 CoreMark/MHz** (`results/system/summary.json`).
+- **Validation:** CoreMark compares its CRCs with EEMBC's known values for the 2K performance run.
+  No CRC error was printed, and seedcrc = 0xe9f5.
+  - CoreMark also counts "Must execute for at least 10 secs" as an error and therefore prints
+    "Errors detected".
+  - 10 iterations in RTL simulation take 8.9 M cycles. A real 10-second run is out of reach in
+    simulation, and running "longer" on a simulated clock would only satisfy the text of the rule.
+- **Label:** every CoreMark number is reported as "RTL simulation, SIM configuration, not a valid
+  published CoreMark score".
+- **Why the figure is low:** RV32I has no M extension, so multiplications are libgcc calls
+  (`__mulsi3`).
+
+## D-026 — Stage count: CPI data (Phase 4)
+- **CPI data** (`scripts/cpi_model.py` → `results/cpi/cpi_model.json`): hazard counts measured on the
+  real 3-stage RTL from the RVFI retire stream (CoreMark, 7,209,775 instructions), with the
+  penalty rules stated in the script:
+
+  | Pipeline | CPI on CoreMark |
+  |---|---|
+  | 2-stage (model) | 1.2861 |
+  | 3-stage (model) | 1.2397 |
+  | 3-stage (measured) | 1.2408 |
+  | 5-stage (model) | 1.4486 |
+
+  - The 3-stage model is within 7,885 cycles of the measured 8,945,622, which validates the
+    counting.
+- **Area data:** only the 3-stage core exists. Yosys synthesis on sky130 tt gives 81,269.19 µm²,
+  8,040 cells and 1,430 flops (`results/area/core_yosys.json`; pre-layout). The 2- and 5-stage
+  designs are not built, so their area is **not measured**.
+- **Reasoning:**
+  - 2 stages: a synchronous SRAM read cannot finish in the same stage as the address. Every load
+    then costs a cycle (+0.0464 CPI here).
+  - 5 stages: 2-cycle branch penalties (+0.2089 CPI). They pay off only if the shorter stages raise
+    fmax by more than that ratio.
+  - The 3-stage clock period is measured in Phase 5. The comparison with a 5-stage fmax stays
+    qualitative because no 5-stage design exists.
+
+## D-027 — SYSCTRL.WAKE_SRC records every wake input edge, masked or not (Phase 4)
+- **What happens:** in `sleep_demo`'s IDLE phase, WAKE_SRC reads 0x5 (core interrupt + timer),
+  although the PMU only had bit 0 unmasked. MTIP also rose and is wired to `wake_irq[2]`.
+- **Status:** this matches the register description ("which wake source(s) fired since last
+  cleared"). The PMU mask decides what wakes the chip; SYSCTRL only records edges.
+- **Firmware practice:** clear WAKE_SRC before sleeping (`sleep_demo` does). After DEEP_SLEEP the
+  recorded value was exactly the one enabled source each time: 0x2 for UART, 0x4 for the timer.
+
 ## Bugs found by formal
 Every counterexample is kept under `results/formal_cex/`. `scripts/cex_dump.py <vcd>` prints it as
 a per-cycle table.
