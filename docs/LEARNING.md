@@ -70,3 +70,39 @@ entries.
 - **Why the core needs no state for a stalled instruction.** The SRAM drops its output after one
   cycle. So when ID/EX stalls, the core simply fetches the same address again, and every
   decision in ID/EX is recomputed from scratch each cycle.
+
+## Phase 3
+- **What arch tests add on top of formal.** riscv-formal checks single instructions and short
+  sequences. The arch tests run complete programs and compare the final memory "signature" with a
+  reference simulator (Spike), so trap handlers and CSR behaviour are covered too: the misaligned
+  and ECALL/EBREAK tests write mcause, mepc and mtval into the signature.
+- **Toolchain details matter.** Linker relaxation turned an alignment padding into a 2-byte c.nop,
+  which a core without the C extension cannot execute. The fix was `-mno-relax` for both sides
+  (D-016).
+- **A test that never fails proves nothing.** Two mutation checks:
+  - RISCOF failed on a planted SLTU bug, as it should.
+  - The crossbar test did *not* fail on a planted bridge bug at first, because it waited forever
+    for a response without complaining. Adding a timeout fixed the test (D-019).
+- **Isolation clamps choose a safe value per signal**, not always 0 (D-021). A powered-off UART's
+  TX pin must idle high. A powered-off APB slave must answer with an error, not hang the bus.
+- **Unit tests vs the SoC smoke test.** Each unit test checks one block against its register map.
+  The smoke test proves the blocks are wired together correctly: reset, PMU boot, ROM, IMEM, APB
+  and UART all have to work for "OK" to appear on the pin.
+
+## Phase 4
+- **Power-up order is a software contract.** The PMU brings the domains up one at a time, so the
+  CPU runs before the peripherals are powered. Isolated peripherals answer with a bus error. The
+  first `hello` run faulted on its very first UART write until crt0 learned to wait for PERI (D-022).
+- **A loader needs a handshake.** If the host starts sending before the receiver is enabled, the
+  first byte is lost. A one-character prompt fixes it (D-023).
+- **Simulators are not silicon.** An asynchronous reset that is low from time 0, with no clock
+  running, never fires in a 2-state simulator without an initial edge. On silicon it would.
+  `--x-initial-edge` restores the real behaviour (D-024).
+- **Measure gating, don't infer it.** The firmware's view (`mcycle` stopped, `mtime` kept going)
+  agrees with the testbench's direct count of core-clock edges (0) while the PMU held the clock
+  enable low.
+- **Benchmarks have rules.** CoreMark's CRCs prove the computation is right. Its 10-second rule
+  still makes a short simulation run "not a valid score". The honest report keeps both facts
+  (D-025).
+- **Check a model against the real thing.** The trace-driven CPI model is only believable for 2 and
+  5 stages because its 3-stage prediction matched the measured RTL cycle count (D-026).

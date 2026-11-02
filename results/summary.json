@@ -1,0 +1,226 @@
+{
+  "entries": {
+    "area.core_synth_flops": {
+      "memory_config": "n/a",
+      "source": "results/area/core_yosys.json",
+      "unit": "",
+      "value": 1430
+    },
+    "area.core_synth_um2": {
+      "memory_config": "n/a",
+      "note": "Yosys synthesis, sky130_fd_sc_hd tt, pre-layout",
+      "source": "results/area/core_yosys.json",
+      "unit": "um^2",
+      "value": 81269.1936
+    },
+    "boot.loader_image_bytes": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "bytes",
+      "value": 1740
+    },
+    "coremark.iterations": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "",
+      "value": 10
+    },
+    "coremark.per_mhz": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "note": "RTL simulation; 10 iterations, below CoreMark's 10 s rule, not a valid published score (D-025)",
+      "source": "results/system/summary.json",
+      "unit": "CoreMark/MHz",
+      "value": 1.1266
+    },
+    "coremark.total_cycles": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "cycles",
+      "value": 8876270
+    },
+    "cpi.coremark.2-stage_model": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "note": "trace-driven model",
+      "source": "results/cpi/cpi_model.json",
+      "unit": "CPI",
+      "value": 1.2861
+    },
+    "cpi.coremark.3-stage_measured": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/cpi/cpi_model.json",
+      "unit": "CPI",
+      "value": 1.2408
+    },
+    "cpi.coremark.3-stage_model": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "note": "trace-driven model",
+      "source": "results/cpi/cpi_model.json",
+      "unit": "CPI",
+      "value": 1.2397
+    },
+    "cpi.coremark.5-stage_model": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "note": "trace-driven model",
+      "source": "results/cpi/cpi_model.json",
+      "unit": "CPI",
+      "value": 1.4486
+    },
+    "formal.checks_pass": {
+      "memory_config": "n/a",
+      "source": "results/formal/summary.json",
+      "unit": "",
+      "value": 79
+    },
+    "formal.checks_total": {
+      "memory_config": "n/a",
+      "source": "results/formal/summary.json",
+      "unit": "",
+      "value": 79
+    },
+    "formal.reg_depth": {
+      "memory_config": "n/a",
+      "source": "results/formal/summary.json",
+      "unit": "cycles (SBY depth)",
+      "value": 15
+    },
+    "riscof.na": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/riscof/summary.json",
+      "unit": "",
+      "value": 41
+    },
+    "riscof.not_run": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/riscof/summary.json",
+      "unit": "",
+      "value": 7
+    },
+    "riscof.pass": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/riscof/summary.json",
+      "unit": "",
+      "value": 65
+    },
+    "sleep.deep_sleep_isolation_violations": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "",
+      "value": 0
+    },
+    "sleep.idle_core_clock_edges": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "edges",
+      "value": 0
+    },
+    "sleep.idle_gated_cycles": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "cycles",
+      "value": 2952
+    },
+    "sleep.idle_mcycle_delta": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "cycles",
+      "value": 160
+    },
+    "sleep.idle_mtime_delta": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "ticks",
+      "value": 3112
+    },
+    "sw.compiler": {
+      "memory_config": "n/a",
+      "source": "results/sw/build_sim.json",
+      "unit": "",
+      "value": "riscv64-unknown-elf-gcc () 16.1.0"
+    },
+    "system.tests_pass": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "",
+      "value": 6
+    },
+    "system.tests_total": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "",
+      "value": 6
+    },
+    "unit.gpio.coverage_bins_hit": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 26
+    },
+    "unit.gpio.coverage_bins_total": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 26
+    },
+    "unit.tests_pass": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 26
+    },
+    "unit.tests_total": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 26
+    },
+    "unit.timer.coverage_bins_hit": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 8
+    },
+    "unit.timer.coverage_bins_total": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 8
+    },
+    "unit.uart.coverage_bins_hit": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 27
+    },
+    "unit.uart.coverage_bins_total": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 27
+    },
+    "unit.xbar.coverage_bins_hit": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 39
+    },
+    "unit.xbar.coverage_bins_total": {
+      "memory_config": "n/a",
+      "source": "results/unit/summary.json",
+      "unit": "",
+      "value": 39
+    },
+    "zbb_bench.base_cycles": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "cycles",
+      "value": 25912
+    },
+    "zbb_bench.zbb_cycles": {
+      "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+      "source": "results/system/summary.json",
+      "unit": "cycles",
+      "value": 4897
+    }
+  },
+  "missing": []
+}

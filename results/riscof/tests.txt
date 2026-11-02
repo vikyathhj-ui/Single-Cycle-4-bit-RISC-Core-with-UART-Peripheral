@@ -1,0 +1,113 @@
+rv32i_m/B/src/andn-01.S                            PASS     594 words match
+rv32i_m/B/src/clz-01.S                             PASS     70 words match
+rv32i_m/B/src/cpop-01.S                            PASS     70 words match
+rv32i_m/B/src/ctz-01.S                             PASS     70 words match
+rv32i_m/B/src/max-01.S                             PASS     574 words match
+rv32i_m/B/src/maxu-01.S                            PASS     574 words match
+rv32i_m/B/src/min-01.S                             PASS     574 words match
+rv32i_m/B/src/minu-01.S                            PASS     574 words match
+rv32i_m/B/src/orcb_32-01.S                         PASS     74 words match
+rv32i_m/B/src/orn-01.S                             PASS     594 words match
+rv32i_m/B/src/rev8_32-01.S                         PASS     156 words match
+rv32i_m/B/src/rol-01.S                             PASS     271 words match
+rv32i_m/B/src/ror-01.S                             PASS     271 words match
+rv32i_m/B/src/rori-01.S                            PASS     160 words match
+rv32i_m/B/src/sext.b-01.S                          PASS     89 words match
+rv32i_m/B/src/sext.h-01.S                          PASS     90 words match
+rv32i_m/B/src/xnor-01.S                            PASS     594 words match
+rv32i_m/B/src/zext.h_32-01.S                       PASS     90 words match
+rv32i_m/I/src/add-01.S                             PASS     590 words match
+rv32i_m/I/src/addi-01.S                            PASS     563 words match
+rv32i_m/I/src/and-01.S                             PASS     586 words match
+rv32i_m/I/src/andi-01.S                            PASS     564 words match
+rv32i_m/I/src/auipc-01.S                           PASS     66 words match
+rv32i_m/I/src/beq-01.S                             NOT RUN  too big for SIM config: region `IMEM' overflowed by 193248 bytes
+rv32i_m/I/src/bge-01.S                             NOT RUN  too big for SIM config: region `IMEM' overflowed by 200640 bytes
+rv32i_m/I/src/bgeu-01.S                            NOT RUN  too big for SIM config: region `IMEM' overflowed by 264992 bytes
+rv32i_m/I/src/blt-01.S                             NOT RUN  too big for SIM config: region `IMEM' overflowed by 192384 bytes
+rv32i_m/I/src/bltu-01.S                            NOT RUN  too big for SIM config: region `IMEM' overflowed by 267904 bytes
+rv32i_m/I/src/bne-01.S                             NOT RUN  too big for SIM config: region `IMEM' overflowed by 195360 bytes
+rv32i_m/I/src/fence-01.S                           PASS     3 words match
+rv32i_m/I/src/jal-01.S                             NOT RUN  too big for SIM config: region `IMEM' overflowed by 1723488 bytes
+rv32i_m/I/src/jalr-01.S                            PASS     35 words match
+rv32i_m/I/src/lb-align-01.S                        PASS     35 words match
+rv32i_m/I/src/lbu-align-01.S                       PASS     34 words match
+rv32i_m/I/src/lh-align-01.S                        PASS     34 words match
+rv32i_m/I/src/lhu-align-01.S                       PASS     34 words match
+rv32i_m/I/src/lui-01.S                             PASS     65 words match
+rv32i_m/I/src/lw-align-01.S                        PASS     34 words match
+rv32i_m/I/src/misalign1-jalr-01.S                  PASS     3 words match
+rv32i_m/I/src/or-01.S                              PASS     589 words match
+rv32i_m/I/src/ori-01.S                             PASS     562 words match
+rv32i_m/I/src/sb-align-01.S                        PASS     72 words match
+rv32i_m/I/src/sh-align-01.S                        PASS     73 words match
+rv32i_m/I/src/sll-01.S                             PASS     91 words match
+rv32i_m/I/src/slli-01.S                            PASS     90 words match
+rv32i_m/I/src/slt-01.S                             PASS     586 words match
+rv32i_m/I/src/slti-01.S                            PASS     562 words match
+rv32i_m/I/src/sltiu-01.S                           PASS     701 words match
+rv32i_m/I/src/sltu-01.S                            PASS     724 words match
+rv32i_m/I/src/sra-01.S                             PASS     92 words match
+rv32i_m/I/src/srai-01.S                            PASS     89 words match
+rv32i_m/I/src/srl-01.S                             PASS     94 words match
+rv32i_m/I/src/srli-01.S                            PASS     92 words match
+rv32i_m/I/src/sub-01.S                             PASS     594 words match
+rv32i_m/I/src/sw-align-01.S                        PASS     70 words match
+rv32i_m/I/src/xor-01.S                             PASS     590 words match
+rv32i_m/I/src/xori-01.S                            PASS     568 words match
+rv32i_m/pmp32/PMP-CFG-reg.S                        N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/PMP-CSR-access.S                     N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-R-priority-level-2.S         N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-R-priority.S                 N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-R.S                          N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-RW-priority-level-2.S        N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-RW-priority.S                N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-RW.S                         N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-RWX.S                        N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-RX-priority-level-2.S        N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-RX-priority.S                N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-RX.S                         N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-X-priority-level-2.S         N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-X-priority.S                 N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NA4-X.S                          N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-R-priority-level-2.S       N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-R-priority.S               N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-R.S                        N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-RW-priority-level-2.S      N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-RW-priority.S              N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-RW.S                       N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-RWX.S                      N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-RX-priority-level-2.S      N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-RX-priority.S              N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-RX.S                       N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-X-priority-level-2.S       N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-X-priority.S               N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-NAPOT-X.S                        N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-R-priority-level-2.S         N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-R-priority.S                 N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-R.S                          N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-RW-priority-level-2..S       N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-RW-priority.S                N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-RW.S                         N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-RWX.S                        N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-RX-priority-level-2.S        N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-RX-priority.S                N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-RX.S                         N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-X-priority-level-2.S         N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-X-priority.S                 N/A      no PMP in this core (SPEC §1)
+rv32i_m/pmp32/pmp-TOR-X.S                          N/A      no PMP in this core (SPEC §1)
+rv32i_m/privilege/src/ebreak.S                     PASS     8 words match
+rv32i_m/privilege/src/ecall.S                      PASS     8 words match
+rv32i_m/privilege/src/misalign-beq-01.S            PASS     69 words match
+rv32i_m/privilege/src/misalign-bge-01.S            PASS     69 words match
+rv32i_m/privilege/src/misalign-bgeu-01.S           PASS     69 words match
+rv32i_m/privilege/src/misalign-blt-01.S            PASS     69 words match
+rv32i_m/privilege/src/misalign-bltu-01.S           PASS     69 words match
+rv32i_m/privilege/src/misalign-bne-01.S            PASS     69 words match
+rv32i_m/privilege/src/misalign-jal-01.S            PASS     69 words match
+rv32i_m/privilege/src/misalign-lh-01.S             PASS     69 words match
+rv32i_m/privilege/src/misalign-lhu-01.S            PASS     69 words match
+rv32i_m/privilege/src/misalign-lw-01.S             PASS     71 words match
+rv32i_m/privilege/src/misalign-sh-01.S             PASS     69 words match
+rv32i_m/privilege/src/misalign-sw-01.S             PASS     71 words match
+rv32i_m/privilege/src/misalign2-jalr-01.S          PASS     69 words match

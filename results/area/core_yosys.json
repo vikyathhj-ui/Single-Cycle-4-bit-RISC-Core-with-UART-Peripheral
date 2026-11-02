@@ -1,0 +1,12 @@
+{
+  "tool": "Yosys 0.68 (git sha1 38e001a6f, Release, GNU /usr/bin/c++ 13.3.0)",
+  "liberty": "sky130_fd_sc_hd__tt_025C_1v80.lib",
+  "kind": "synthesis (pre-layout), flattened by the slang frontend",
+  "modules": {
+    "lp_rv32_core": {
+      "cells": 8040,
+      "area_um2": 81269.1936,
+      "flops": 1430
+    }
+  }
+}

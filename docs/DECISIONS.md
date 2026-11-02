@@ -229,6 +229,207 @@ All options come from the installed framework (`ext/riscv-formal` at `c992aa6`, 
 - **Possible later improvement (not done):** run `reg` with a different engine, or let it run for
   hours. That is optional and would be recorded here.
 
+## D-013 — RISCOF reference model: Spike (Phase 3, owner decision 2026-11-02)
+- **Context:**
+  - riscv-arch-test 3.10.0 (D-003) ships a Sail RISCOF plugin that runs the old `riscv_sim_RV32`
+    binary.
+  - The installed Sail 0.16 provides `sail_riscv_sim`, which has a different command line and a
+    JSON configuration.
+  - Spike 1.1.1-dev is installed in the container. BRIEF A5 allows Spike "if Sail is impractical;
+    say which".
+- **Options:** adapt the Sail plugin to 0.16, or use Spike.
+- **Choice (owner):** Spike. Every arch-test result names Spike as the reference model.
+- **Consequence:** Spike must be configured to match this core's choices (misaligned accesses trap,
+  S-1; mtval values, S-5). The plugin settings are recorded in `riscof/`.
+
+## D-014 — PMU vendored from P2 `master` a87ba58 (Phase 3)
+- **Context:**
+  - P2 was renamed `vikyathhj-ui/soc-pmu-sequencer`. Its default branch is `master`, and its RTL
+    is merged (P2 PRs #2 and #3).
+  - P2 PR #4 (README, resume bullets) was still open on 2026-11-02. `git diff a87ba58
+    origin/rework/pmu -- rtl scripts/regmap.yaml` is empty.
+- **Choice (owner: "start Phase 3 now"):** vendor from `master` `a87ba58`. If PR #4 changes
+  anything that is vendored, re-vendor.
+- **Register map:** `vendor/pmu/regmap.yaml` is identical to the provisional copy (D-009), so
+  `docs/MEMORY_MAP.md` is unchanged.
+
+## D-015 — Arch tests: SIM memory size, exclusions, and test addresses (Phase 3, owner decisions 2026-11-02)
+- **Size.** The riscv-arch-test 3.10.0 tests are far larger than the brief's 32 KB SIM memory. The
+  largest code is `rv32i_m/I/src/jal-01.S` at 1,756,272 bytes; the largest data is 7,532 bytes
+  (`bgeu-01`).
+  - Options: add a 2 MB "ARCH" configuration, or run only the tests that fit 32 KB.
+  - **Choice (owner):** only tests that fit the SIM configuration (IMEM 32 KB + DMEM 32 KB).
+  - `scripts/run_riscof.py` links each test with the real 32 KB script. Those that overflow are
+    listed as "NOT RUN (too big)", with the linker's overflow size, in
+    `results/riscof/summary.json`.
+- **PMP.** The 41 `rv32i_m/pmp32` tests are excluded as N/A (owner): the core has no PMP (SPEC §1).
+- **Zicsr.** riscv-arch-test 3.10.0 has no separate Zicsr suite for rv32i_m. CSR behaviour is
+  exercised through the `privilege` tests' trap handler (mtvec, mepc, mcause, mtval, mstatus).
+- **Addresses.** Spike has a built-in UART at 0x1000_0000, which overlaps the SoC's IMEM base. The
+  DUT and Spike must link identically, so for the arch tests only IMEM is at 0x8000_0000
+  (`riscof/env/link.ld`). `lp_rv32_xbar` takes `IMEM_BASE`/`DMEM_BASE` parameters (defaults = the
+  SoC memory map), and `tb/arch/tb_arch.sv` overrides IMEM_BASE. The core RTL is the same.
+
+## D-016 — Arch tests compiled with `-mno-relax` (Phase 3)
+- **Symptom:** `add-01` timed out on the DUT. The trace (`scripts/arch_one.py --trace`) showed an
+  illegal-instruction trap at pc 0x800002c8 on the word 0x00130001. The disassembly shows a 2-byte
+  `.insn 2, 0x0001` (c.nop) after a `la`, with the following 4-byte nops at 2-byte-aligned
+  addresses.
+- **Cause:** `arch_test.h` wraps `.align UNROLLSZ` in `.option rvc` (LA macro, RVTEST_CODE_BEGIN).
+  With linker relaxation, the linker trims the alignment padding and can leave a c.nop in it. A
+  core without C cannot execute that.
+- **Fix:** both plugins and the size check compile with `-mno-relax`, so the padding is exact.
+  The DUT and the reference get identical code. No c.nop remains (`objdump` count 0 for add-01).
+
+## D-017 — RISCOF flow checked with a mutant (Phase 3)
+- **Purpose:** to show that a PASS really means matching signatures.
+- **Method:** a copy of `core_decode.sv` that decodes SLTU as SLT was built into the testbench and
+  the full flow re-run.
+- **Result** (`results/riscof/mutation_check.txt`): `rv32i_m/I/src/sltu-01.S` FAIL, "183 of 724
+  words differ, first at word 1". Every other test still passes. The real RTL was never edited, and
+  the testbench was rebuilt from it afterwards.
+
+## D-018 — SYSCTRL detects a warm boot from the PMU main-switch acknowledge (Phase 3)
+- **Context:**
+  - The first version sampled the core-domain reset (PMU `rst_n[CPU]`) as data to see it rise.
+  - That same net is the core's asynchronous reset. Verilator reported `SYNCASYNCNET` on it.
+- **Choice:** set `RESET_CAUSE.WARM` when the CPU domain powers up again, i.e. when PMU
+  `psw_main_ack[0]` rises for any time after the first one following a cold reset.
+  - This signal is AON-side and is not a reset.
+  - The main switch comes on before the PMU releases the core reset (P2 SPEC §4.3), so WARM is
+    already set when the core starts.
+  - The lint stays clean without a waiver (D-011).
+
+## D-019 — Crossbar/bridge test: missing response timeout found by a mutant (Phase 3)
+- **What happened:** a mutant of `apb_bridge.sv` was tried. It accepts a request only in IDLE, so it
+  drops one that arrives in the response cycle, which is the bug fixed while the bridge was being
+  written.
+  - The first version of `tb/unit/test_xbar.py` still reported `test_random_traffic` as PASS: the
+    dropped request just never got a response, and the test kept waiting.
+  - Only the coverage check failed.
+- **Fix to the test:** every D-port request must be answered within 40 cycles (the slave model
+  inserts at most 15 wait states).
+- **Result:** with the mutant, `test_random_traffic` FAILs with "D write APB: no response after 40
+  cycles". With the real RTL it passes (`results/unit/mutation_xbar.txt`).
+
+## D-020 — Boot ROM: Phase 3 stub, loader in Phase 4 (Phase 3)
+- **Now:** `rtl/soc/bootrom_image.svh` is generated by `scripts/gen_bootrom.py` from
+  `sw/boot/boot_stub.S`. The stub just jumps to IMEM_BASE (2 words).
+- **Phase 4:** the real loader (SPEC §7: warm path, BOOT.SEL strap, UART loader) replaces it from
+  `sw/boot/`. The ROM is always generated from source, never hand-typed.
+
+## D-021 — SoC power-domain wiring choices (Phase 3)
+- **PERI and DSP Q-Channels:** an always-accepting stub device (`rtl/soc/qch_stub_dev.sv`) per S-7.
+  Firmware empties the UART TX FIFO before DEEP_SLEEP (SPEC §8.3).
+- **Isolation, CORE → anything else:** every signal leaving CORE is clamped to 0 by `iso_en[0]`.
+  That covers the APB request signals to AON/PERI slaves and the core's wake request. The
+  Q-Channel outputs are already isolated inside the PMU.
+- **Isolation, PERI → anything else:** every signal leaving PERI is clamped by `iso_en[2]`:
+  - the APB response clamps to an error (PREADY=1, PSLVERR=1, PRDATA=0), so an access to a
+    powered-off peripheral cannot hang the bridge;
+  - `uart_txd` clamps to 1, the idle line level;
+  - interrupts, GPIO outputs and output enables clamp to 0.
+- **Clocks:** all clocks come from the one `clk` through the PMU's ICGs, so the domains are
+  synchronous to each other.
+- **Physical design note for Phase 5:** P2's `iso_wrap`/`icg_wrap` select the sky130 cells with
+  `PMU_SKY130_CELLS`. P2 found that LibreLane excludes the `lpflow_*` isolation cells, so the
+  Phase 5 configuration must handle the isolation cells.
+
+## D-022 — Software waits for PERI before touching the UART or GPIO (Phase 4)
+- **Found by:** the first `hello` system test printed nothing. The trace showed a store access
+  fault at cycle 79 on the first UART write (`sw a0,12(a5)` to 0x4000_000C).
+- **Cause:** the PMU powers the domains up one at a time, CPU before PERI (P2 inrush arbiter), so
+  the core runs before PERI is on. While PERI is isolated, its clamps answer every APB access with an
+  error, which is the intended behaviour (D-021). The Phase 3 smoke test only passed because of its
+  timing.
+- **Fix:** software rule, recorded in SPEC §7 and §8.1:
+  - `crt0` calls `hal_wait_peri()` before `main()`. It polls PMU `PD_STATE` until PERI is ON and
+    not busy.
+  - The boot ROM loader and `sw/tests/smoke.S` do the same before using the UART.
+- **Alternative (not taken):** a hardware stall of the core until all domains are up. This would
+  change the PMU's sequencing, which is P2's design.
+
+## D-023 — UART loader sends a '>' prompt before it accepts data (Phase 4)
+- **Found by:** the loader test. Its host sent the first length byte while PERI was still powering
+  up. The receiver was not enabled yet, so the length was decoded wrongly.
+- **Fix:** once the UART is enabled, the boot ROM writes '>'. The host waits for it before sending.
+  It costs 2 instructions; the ROM is 216 of 256 bytes.
+- **Result:** the prompt arrives 4,232 cycles after reset release (`results/system/summary.json`,
+  loader). That is the PERI power-up plus one frame at the reset divisor.
+
+## D-024 — Verilator `--x-initial-edge` for every simulation build (Phase 4)
+- **Symptom:** in the SoC, the first instruction retired at pc 0x4, not the reset vector.
+  - That made the boot ROM's `lw t0, 4(s0)` read through a stale `s0`, so the loader took the warm
+    path on a cold boot.
+  - A probe showed `id_pc` = 0 instead of `RESET_VEC − 4` after reset.
+- **Cause:** a simulation semantics issue, not an RTL bug.
+  - The core's flops are `always_ff @(posedge clk or negedge rst_n)`. In the SoC, `rst_n[CPU]` is
+    low from time 0, and the CORE clock is gated off during reset.
+  - Verilator's 2-state initial value (0) produces no `negedge` at time 0, so the reset branch never
+    ran.
+  - On silicon an asynchronous reset is level-sensitive. The arch testbench did not show this,
+    because its clock runs during reset.
+- **Fix:** `--x-initial-edge` ("Enable initial X->0 and X->1 edge triggers", `verilator --help`) in
+  `make tb-arch`, `scripts/run_unit.py` and `scripts/run_system.py`.
+  - After the fix the first retirement is pc 0x0 (`lui s0, 0x40004`).
+  - RISCOF was re-run with the rebuilt testbench.
+
+## D-025 — CoreMark: port, run length and labelling (Phase 4)
+- **Source:** EEMBC CoreMark, `eembc/coremark` at `1f483d5b` (2025-05-01), cloned into git-ignored
+  `ext/coremark`.
+  - The core files (`core_list_join.c`, `core_main.c`, `core_matrix.c`, `core_state.c`,
+    `core_util.c`, `coremark.h`) are compiled unmodified.
+  - The port in `sw/coremark/` is EEMBC's `barebones` porting files, changed only where marked
+    "lp_rv32 port": the timer is `mcycle`, the UART uses the HAL, there are no float or time.h, and
+    `DONE` is printed at the end. This follows the CoreMark rule that only porting files may change.
+- **Time base:** `EE_TICKS_PER_SEC` = 1,000,000 cycles, so CoreMark's printed Iterations/Sec equals
+  CoreMark/MHz.
+  - The reported figure is computed by the test from the printed "Iterations" and "Total ticks":
+    10 × 10^6 / 8,876,270 = **1.1266 CoreMark/MHz** (`results/system/summary.json`).
+- **Validation:** CoreMark compares its CRCs with EEMBC's known values for the 2K performance run.
+  No CRC error was printed, and seedcrc = 0xe9f5.
+  - CoreMark also counts "Must execute for at least 10 secs" as an error and therefore prints
+    "Errors detected".
+  - 10 iterations in RTL simulation take 8.9 M cycles. A real 10-second run is out of reach in
+    simulation, and running "longer" on a simulated clock would only satisfy the text of the rule.
+- **Label:** every CoreMark number is reported as "RTL simulation, SIM configuration, not a valid
+  published CoreMark score".
+- **Why the figure is low:** RV32I has no M extension, so multiplications are libgcc calls
+  (`__mulsi3`).
+
+## D-026 — Stage count: CPI data (Phase 4)
+- **CPI data** (`scripts/cpi_model.py` → `results/cpi/cpi_model.json`): hazard counts measured on the
+  real 3-stage RTL from the RVFI retire stream (CoreMark, 7,209,775 instructions), with the
+  penalty rules stated in the script:
+
+  | Pipeline | CPI on CoreMark |
+  |---|---|
+  | 2-stage (model) | 1.2861 |
+  | 3-stage (model) | 1.2397 |
+  | 3-stage (measured) | 1.2408 |
+  | 5-stage (model) | 1.4486 |
+
+  - The 3-stage model is within 7,885 cycles of the measured 8,945,622, which validates the
+    counting.
+- **Area data:** only the 3-stage core exists. Yosys synthesis on sky130 tt gives 81,269.19 µm²,
+  8,040 cells and 1,430 flops (`results/area/core_yosys.json`; pre-layout). The 2- and 5-stage
+  designs are not built, so their area is **not measured**.
+- **Reasoning:**
+  - 2 stages: a synchronous SRAM read cannot finish in the same stage as the address. Every load
+    then costs a cycle (+0.0464 CPI here).
+  - 5 stages: 2-cycle branch penalties (+0.2089 CPI). They pay off only if the shorter stages raise
+    fmax by more than that ratio.
+  - The 3-stage clock period is measured in Phase 5. The comparison with a 5-stage fmax stays
+    qualitative because no 5-stage design exists.
+
+## D-027 — SYSCTRL.WAKE_SRC records every wake input edge, masked or not (Phase 4)
+- **What happens:** in `sleep_demo`'s IDLE phase, WAKE_SRC reads 0x5 (core interrupt + timer),
+  although the PMU only had bit 0 unmasked. MTIP also rose and is wired to `wake_irq[2]`.
+- **Status:** this matches the register description ("which wake source(s) fired since last
+  cleared"). The PMU mask decides what wakes the chip; SYSCTRL only records edges.
+- **Firmware practice:** clear WAKE_SRC before sleeping (`sleep_demo` does). After DEEP_SLEEP the
+  recorded value was exactly the one enabled source each time: 0x2 for UART, 0x4 for the timer.
+
 ## Bugs found by formal
 Every counterexample is kept under `results/formal_cex/`. `scripts/cex_dump.py <vcd>` prints it as
 a per-cycle table.

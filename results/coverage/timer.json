@@ -1,0 +1,14 @@
+{
+  "timer.event": {
+    "size": 5,
+    "hits": 5,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "timer.prescale": {
+    "size": 3,
+    "hits": 3,
+    "percent": 100.0,
+    "missed_bins": []
+  }
+}

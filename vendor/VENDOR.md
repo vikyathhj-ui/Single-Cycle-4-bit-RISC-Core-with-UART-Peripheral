@@ -7,16 +7,34 @@ files are never edited here (docs/BRIEF.md Part B rule 3).
 | Path | Source repo | Branch | Commit | Commit date | Licence | Status |
 |---|---|---|---|---|---|---|
 | `vendor/alu/` (`rtl/**`, `LICENSE`) | `vikyathhj-ui/prefix-adder-alu-sky130` (formerly `32bit-RTL-To-GDS`) | `main` | `d59a42ed33e6b930f38eb6915c63e1f011f7c8a1` | 2026-11-01T11:47:25+05:30 | MIT (`vendor/alu/LICENSE`) | Vendored for Phase 2 (combinational units used by `rtl/core/core_alu.sv`, S-2) |
-| `vendor/pmu/regmap.yaml` | `vikyathhj-ui/multipower` (to be renamed `soc-pmu-sequencer`) | `rework/pmu` (**not merged**) | `5fe30e0376d3df103832a87eed13702941246aea` | 2026-11-01T07:50:55Z | see the P2 repo | **Provisional**, for the Phase 1 memory map only (D-006, D-009) |
+| `vendor/pmu/` (`rtl/**`, `upf/pmu_soc.upf`, `LICENSE`; `regmap.yaml` = P2 `scripts/regmap.yaml`) | `vikyathhj-ui/soc-pmu-sequencer` (formerly `multipower`) | `master` | `a87ba58fffc41e844f312ff21689d24da2011121` | 2026-11-01T20:13:24+05:30 | MIT (`vendor/pmu/LICENSE`) | Vendored for Phase 3 (D-014) |
 
 **Notes**
-- `vendor/pmu/regmap.yaml`:
-  - sha256 `9ca7c006eb3270156f66f90eef363f0b65f4409b31445f9d81e5d1aa903791b1`.
-  - It is taken from the P2 work branch rather than `master`. On `master`
-    (`5cca517`) the `pd_state` keys `ON`/`OFF` are unquoted, so YAML 1.1 loads them as booleans. P2
-    fixed this in `dc12040`, which is not merged yet.
-  - When P2 is merged, the full PMU RTL is vendored from P2's default branch and this file is
-    re-pinned to the same commit.
+- **PMU (P2)**:
+  - Copied with `git archive a87ba58 rtl LICENSE upf/pmu_soc.upf`, plus `scripts/regmap.yaml`
+    saved as `vendor/pmu/regmap.yaml`. All 14 files are byte-identical to the source.
+  - It replaces the provisional regmap copy from `rework/pmu` `5fe30e0` (D-009). The YAML is
+    identical in both commits, so the memory map did not change.
+  - P2's PR #4 (README and resume bullets) was still open when this was vendored. It does not
+    touch `rtl/` or `scripts/regmap.yaml`.
+  - sha256 of the vendored files:
+
+```
+bcb051e1e82b74216e2408cadeda3e0d9d573bfb3e59b22f01b5b262e729488d  vendor/pmu/LICENSE
+9ca7c006eb3270156f66f90eef363f0b65f4409b31445f9d81e5d1aa903791b1  vendor/pmu/regmap.yaml
+b8e326d0208b643557b75de0f719d26b8c4aa67016368f24ac295aff6c6d1385  vendor/pmu/rtl/apb_regs.sv
+b3e86c0eff0d1bf183f8378059bef2b5f946bd158756ae44049e38e6798b431d  vendor/pmu/rtl/cells/icg_wrap.sv
+56dbf0fd25c21f2a2e223d2b15cb8822ab435692a6c74de9d902fe22718222c9  vendor/pmu/rtl/cells/iso_wrap.sv
+15c1fb2290a69388b9aaa78dd7586ef826d49ca88f6d2b9086add624d2e83e91  vendor/pmu/rtl/inrush_arb.sv
+a2e6dc9abf3089ada2bb5ad2b9d5a5acd6a8026d57f52c5d775699ca8f98b5ae  vendor/pmu/rtl/pd_ctrl.sv
+d013a87137bf845da80761e3fc54c581b70a2cebbf34baca4509afaf8edd2173  vendor/pmu/rtl/pmu_regmap_pkg.sv
+b82d500a8398d1fcc96fedcb844884dd155292301b5e0df21ff53a664c357585  vendor/pmu/rtl/pmu_top.sv
+3532a504a00da411a6de34524393e270bc060903479a5fb50577a4f9c34af8f7  vendor/pmu/rtl/qch_master.sv
+ec1fe8a6d70820675118bad52865431a5d11f437108375681837592974722d9b  vendor/pmu/rtl/rst_sync.sv
+c37d4add813b6ebcdd1d23e3aafbd484d640f7b0cd203bd22ecb990038c28d81  vendor/pmu/rtl/sync_ff.sv
+23d43760b43d201b728c49f37698e19cf96cdd18554708e1a9f1dc62844249f1  vendor/pmu/rtl/wake_ctrl.sv
+6dc797f6fb4b2361622f2a9aaeacdf76c113a6ed3810404da485670de60c83fb  vendor/pmu/upf/pmu_soc.upf
+```
 - **ALU (P1)**:
   - Copied with `git archive d59a42e rtl LICENSE`. `.gitkeep` was dropped; every other file is
     byte-identical.
@@ -46,3 +64,12 @@ cf7364e62bd6f41356bdf80895efe4850301a9d65682fb3a7c82ce1ba96ca450  vendor/alu/rtl
 9da8f6c44f7f30c67fcc7f62e6282e9eeb036e86b38b296e3493746f2d4174a1  vendor/alu/rtl/cpop.sv
 1fb7a0a4b868e5ef13fc6f8cd8be219978f903c438e17e05b3cc24b4b4b277fb  vendor/alu/rtl/shifter.sv
 ```
+
+## Third-party code outside `vendor/`
+- **`sw/coremark/`** (`core_portme.c`, `core_portme.h`, `ee_printf.c`):
+  - **Source:** EEMBC's CoreMark `barebones` porting files from `eembc/coremark` at
+    `1f483d5b8316753a742cbf5590caf5bd0a4e4777` (2025-05-01). Apache-2.0 headers are kept.
+  - **Changes:** made only where marked "lp_rv32 port", as CoreMark's porting rules allow (D-025).
+  - **Not copied:** the CoreMark core files. They are compiled unmodified from the git-ignored
+    `ext/coremark` checkout at the same commit (`git clone https://github.com/eembc/coremark
+    ext/coremark`). CoreMark® is a trademark of EEMBC.

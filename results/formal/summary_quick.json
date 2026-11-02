@@ -5,7 +5,7 @@
   "solver": "yices",
   "subset": null,
   "depth_overrides": null,
-  "wall_seconds": 51.4,
+  "wall_seconds": 91.0,
   "counts": {
     "PASS": 79
   },

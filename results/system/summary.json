@@ -1,0 +1,138 @@
+{
+  "coremark": {
+    "log": "sim_build/system/test_coremark.log",
+    "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+    "metrics": {
+      "compiler_flags": "-march=rv32i_zicsr_zbb -mabi=ilp32 -O2 -ffreestanding -fno-builtin-printf -nostdlib -nostartfiles",
+      "compiler_version": "GCC16.1.0",
+      "coremark_per_mhz": 1.1266,
+      "crcs": {
+        "[0]crcfinal": "0xfcaf",
+        "[0]crclist": "0xe714",
+        "[0]crcmatrix": "0x1fd7",
+        "[0]crcstate": "0x8e3a",
+        "seedcrc": "0xe9f5"
+      },
+      "crcs_match_eembc_known_values": true,
+      "data_location": "STACK (DMEM)",
+      "hazard_stats_whole_program": {
+        "ct_taken": 1506163,
+        "cycles": 8945622,
+        "load_use_d1": 221799,
+        "load_use_d2": 158525,
+        "loads": 556880,
+        "retired": 7209775
+      },
+      "iterations": 10,
+      "label": "RTL simulation, SIM memory configuration (IMEM 32 KB + DMEM 32 KB)",
+      "ten_second_rule_error_printed": true,
+      "total_ticks_cycles": 8876270,
+      "valid_published_score": false
+    },
+    "program": "sw/coremark",
+    "status": "PASS",
+    "tests": {
+      "test_coremark": "PASS"
+    }
+  },
+  "hello": {
+    "log": "sim_build/system/test_hello.log",
+    "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+    "metrics": {},
+    "program": "sw/hello",
+    "status": "PASS",
+    "tests": {
+      "test_hello": "PASS"
+    }
+  },
+  "irq_test": {
+    "log": "sim_build/system/test_irq_test.log",
+    "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+    "metrics": {
+      "checked_lines": 7
+    },
+    "program": "sw/irq_test",
+    "status": "PASS",
+    "tests": {
+      "test_irq": "PASS"
+    }
+  },
+  "loader": {
+    "log": "sim_build/system/test_loader.log",
+    "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+    "metrics": {
+      "checksum": "0x0001ebe5",
+      "image_bytes": 1740,
+      "load_and_run_cycles": 7600766,
+      "loader_baud_div": 433,
+      "prompt_after_reset_cycles": 4232
+    },
+    "program": "sw/loader_payload",
+    "status": "PASS",
+    "tests": {
+      "test_uart_loader": "PASS"
+    }
+  },
+  "sleep_demo": {
+    "log": "sim_build/system/test_sleep_demo.log",
+    "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+    "metrics": {
+      "corrupt_core_events": 2,
+      "corrupt_peri_events": 2,
+      "deep_sleep_off_windows": [
+        {
+          "cycles": 2704,
+          "start": 11686,
+          "violations": 0
+        },
+        {
+          "cycles": 3312,
+          "start": 20672,
+          "violations": 0
+        }
+      ],
+      "idle_gated_windows": [
+        {
+          "core_clock_edges": 0,
+          "cycles": 2952,
+          "start": 1884
+        }
+      ],
+      "idle_mcycle_delta": 160,
+      "idle_mtime_delta": 3112,
+      "uart_wake_byte_sent_cycle": 14357
+    },
+    "program": "sw/sleep_demo",
+    "status": "PASS",
+    "tests": {
+      "test_sleep": "PASS"
+    }
+  },
+  "zbb_bench": {
+    "log": "sim_build/system/test_zbb_bench.log",
+    "memory_config": "SIM (IMEM 32 KB + DMEM 32 KB)",
+    "metrics": {
+      "base_cycles": 25912,
+      "base_instret": 22594,
+      "hazard_stats_whole_program": {
+        "ct_taken": 7083,
+        "cycles": 49111,
+        "load_use_d1": 341,
+        "load_use_d2": 1176,
+        "loads": 1677,
+        "retired": 40810
+      },
+      "march_base": "rv32i_zicsr",
+      "march_zbb": "rv32i_zicsr_zbb",
+      "result": "0x848a0121",
+      "words": 256,
+      "zbb_cycles": 4897,
+      "zbb_instret": 4636
+    },
+    "program": "sw/zbb_bench",
+    "status": "PASS",
+    "tests": {
+      "test_zbb": "PASS"
+    }
+  }
+}

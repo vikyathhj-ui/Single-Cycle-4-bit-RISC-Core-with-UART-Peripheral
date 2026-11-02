@@ -1,0 +1,12 @@
+# Mutation check of tb/unit/test_xbar.py, 2026-11-02T02:47Z
+# Mutant: rtl/soc/apb_bridge.sv accepts a request only in IDLE (drops one that arrives in the RESP cycle).
+# Real RTL restored afterwards (git diff empty).
+## diff
+49c49
+<             if ((state == IDLE || state == RESP) && req) begin
+---
+>             if (state == IDLE && req) begin
+## first run (before the test had a response timeout): test_random_traffic PASS, only coverage failed -> test weakness, D-019
+## after adding the 40-cycle response timeout:
+MUTANT: {'test_random_traffic': 'FAIL', 'test_zz_coverage_export': 'FAIL'}
+                                                        AssertionError: D write APB: no response after 40 cycles

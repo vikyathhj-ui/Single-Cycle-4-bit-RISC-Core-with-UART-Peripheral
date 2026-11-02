@@ -89,6 +89,73 @@ Answers are filled in as each phase produces evidence. Numbers are copied only f
     result within 30 min at 17 or 19 (D-012). So `reg` runs at 15 and the rest at their configured
     depths. Longer sequences are covered by the arch and system tests.
 
+## Verification layers (Phase 3)
+15. **Q: riscv-formal, arch tests and system tests: what does each find?**
+    A:
+    - **riscv-formal** proves that every instruction and short sequence is right, for *any* input,
+      up to a bound (79/79 checks, `results/formal/summary.json`). It found Bug 01.
+    - **Arch tests** run whole programs and compare memory signatures with Spike. 65 PASS
+      (`results/riscof/summary.json`). They cover trap handlers and CSRs that formal skipped here.
+    - **System tests** (Phase 4) run real firmware on the whole SoC.
+    The layers overlap on purpose.
+16. **Q: Your arch-test report has "NOT RUN" entries. Why?**
+    A: Seven tests (the six branch tests and jal-01) need more than the 32 KB simulation memory. The
+    largest overflows by 1,723,488 bytes. The owner chose to run only what fits rather than add a
+    larger memory configuration (D-015). Branches and JAL are still proven by riscv-formal.
+17. **Q: How do you know a test can fail?**
+    A: Mutation checks:
+    - SLTU decoded as SLT makes `sltu-01` fail, with 183 of 724 words different.
+    - A bridge that drops a back-to-back request made the crossbar test fail only after I added a
+      response timeout. Before that it hung silently (D-019).
+18. **Q: What did the UART test measure for baud accuracy?**
+    A: Every transmitted bit is held for exactly BAUD_DIV+1 clock cycles, checked cycle by cycle on
+    `txd`, for divisors 1, 3, 15 and 433. The receiver also accepts frames with a bit period off by
+    ±3 % (`results/unit/summary.json`, `tb/unit/test_uart.py`).
+
+## Software, power and benchmarks (Phase 4)
+19. **Q: How does WFI interact with the PMU in IDLE?**
+    A: Firmware writes `MODE_REQ`=IDLE and executes WFI. The core accepts the PMU's Q-Channel
+    request only once WFI is stalled with an empty pipeline. The PMU then drops the ICG enable. In
+    `sleep_demo` the core clock had 0 edges over a 2,952-cycle IDLE window. An enabled interrupt
+    (`mip & mie`) raises `wake_irq[0]`, the PMU turns the clock back on, WFI retires, and the
+    interrupt is taken (`results/system/summary.json`).
+20. **Q: Why warm boot instead of retaining the CPU state?**
+    A: The CORE domain has no retention flops (`HAS_RET` = 0). DMEM and IMEM stay powered and
+    SYSCTRL.SCRATCH is in AON, so software keeps its state there. The boot ROM sees
+    RESET_CAUSE.WARM and jumps straight to IMEM. This avoids retention cells and keeps isolation and
+    reset simple. The cost is a short re-boot (docs/POWER.md §4).
+21. **Q: How do you know DEEP_SLEEP really loses the CPU state in simulation?**
+    A: A behavioural corruption model in the testbench overwrites the register file and the UART
+    FIFOs when a domain's power switch turns off. It fired 2 times per domain in `sleep_demo`, and
+    the warm boots still worked. A monitor also saw 0 isolation violations while the domains were
+    off.
+22. **Q: What is your CoreMark/MHz and what are the caveats?**
+    A: 1.1266, from 10 iterations in 8,876,270 cycles, RTL simulation, 32 KB SIM memories, GCC 16.1.0
+    `-O2`. The CRCs match EEMBC's known values. But a 10-iteration simulation is far below
+    CoreMark's 10-second rule, so it is not a valid published score (D-025). RV32I has no hardware
+    multiply, which pulls the number down.
+23. **Q: What did Zbb buy you?**
+    A: On a bit-manipulation kernel over 256 words: 25,912 cycles without Zbb (libgcc popcount,
+    clz, ctz, bswap) vs 4,897 with Zbb (cpop, clz, ctz, rev8, ror, minu, maxu, andn), with the
+    same result.
+24. **Q: Why 3 stages? Give numbers.**
+    A: CPI on CoreMark:
+    - 3-stage measured 1.2408, and the model predicts 1.2397;
+    - 2-stage model 1.2861: every load costs a cycle with synchronous SRAM;
+    - 5-stage model 1.4486: 2-cycle taken-branch penalty.
+
+    A 5-stage design would need about 17 % higher fmax just to break even. Its area was not
+    measured; the 3-stage core synthesises to 81,269.19 µm² (D-026).
+25. **Q: Your first hello test printed nothing. What was wrong?**
+    A: The PMU powers CPU before PERI, so the first UART write hit an isolated peripheral and got
+    a bus error, which is the clamp's intended behaviour. Software now waits for PERI ON (D-022). It
+    shows that power sequencing is part of the software contract.
+26. **Q: What is the boot flow?**
+    A: The ROM runs at 0x0. WARM → jump to IMEM. BOOT.SEL strap → jump to IMEM (preloaded).
+    Otherwise it waits for PERI, sends '>', receives a 4-byte length and the image into IMEM,
+    echoes the checksum and jumps. In the loader test a 1,740-byte image round-tripped with
+    checksum 0x0001ebe5.
+
 <!-- Topics still to cover (Part B rule 7): pipeline hazards and forwarding paths; load-use stall;
      branch penalty and CPI; trap entry/exit, mepc/mcause; WFI with interrupts disabled; warm boot vs
      retention; what RVFI checks and cannot; riscv-formal vs arch tests vs system tests; CoreMark/MHz

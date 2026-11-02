@@ -1,0 +1,20 @@
+{
+  "gpio.edge.kind": {
+    "size": 2,
+    "hits": 2,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "gpio.edge.pin": {
+    "size": 8,
+    "hits": 8,
+    "percent": 100.0,
+    "missed_bins": []
+  },
+  "gpio.edge.pin_x_kind": {
+    "size": 16,
+    "hits": 16,
+    "percent": 100.0,
+    "missed_bins": []
+  }
+}

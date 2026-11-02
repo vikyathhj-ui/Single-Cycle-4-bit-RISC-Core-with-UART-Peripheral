@@ -3,3 +3,5 @@
 clean
 ## lp_rv32_core -DRISCV_FORMAL
 clean
+## lp_rv32_soc (SIM memory configuration)
+clean
