@@ -1,0 +1,12 @@
+# riscv-config platform spec for lp_rv32 (format as in riscv-arch-test 3.10.0 spike_simple).
+# mtime/mtimecmp addresses: TIMER block, docs/MEMORY_MAP.md (MTIME_LO 0x40002010, MTIMECMP_LO 0x40002008).
+mtime:
+  implemented: true
+  address: 0x40002010
+mtimecmp:
+  implemented: true
+  address: 0x40002008
+nmi:
+  label: nmi_vector
+reset:
+  label: reset_vector

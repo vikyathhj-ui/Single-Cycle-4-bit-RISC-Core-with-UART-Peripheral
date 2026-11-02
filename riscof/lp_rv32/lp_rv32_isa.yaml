@@ -1,0 +1,32 @@
+# riscv-config ISA spec for lp_rv32 (docs/SPEC.md §1-§3). Format as in riscv-arch-test 3.10.0
+# riscof-plugins/rv32/spike_simple/spike_simple_isa.yaml.
+# misa = 0x4000_0100 (MXL=1, I), read-only (SPEC §3, D-007 S-3): Zbb is in the ISA string only.
+hart_ids: [0]
+hart0:
+  ISA: RV32IZicsr_Zbb
+  physical_addr_sz: 32
+  User_Spec_Version: '2.3'
+  supported_xlen: [32]
+  hw_data_misaligned_support: false
+  misa:
+   reset-val: 0x40000100
+   rv32:
+     accessible: true
+     mxl:
+       implemented: true
+       type:
+           warl:
+              dependency_fields: []
+              legal:
+                - mxl[1:0] in [0x1]
+              wr_illegal:
+                - Unchanged
+     extensions:
+       implemented: true
+       type:
+           warl:
+              dependency_fields: []
+              legal:
+                - extensions[25:0] in [0x0000100]
+              wr_illegal:
+                - Unchanged

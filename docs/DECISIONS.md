@@ -229,6 +229,66 @@ All options come from the installed framework (`ext/riscv-formal` at `c992aa6`, 
 - **Possible later improvement (not done):** run `reg` with a different engine, or let it run for
   hours. That is optional and would be recorded here.
 
+## D-013 — RISCOF reference model: Spike (Phase 3, owner decision 2026-11-02)
+- **Context:**
+  - riscv-arch-test 3.10.0 (D-003) ships a Sail RISCOF plugin that runs the old `riscv_sim_RV32`
+    binary.
+  - The installed Sail 0.16 provides `sail_riscv_sim`, which has a different command line and a
+    JSON configuration.
+  - Spike 1.1.1-dev is installed in the container. BRIEF A5 allows Spike "if Sail is impractical;
+    say which".
+- **Options:** adapt the Sail plugin to 0.16, or use Spike.
+- **Choice (owner):** Spike. Every arch-test result names Spike as the reference model.
+- **Consequence:** Spike must be configured to match this core's choices (misaligned accesses trap,
+  S-1; mtval values, S-5). The plugin settings are recorded in `riscof/`.
+
+## D-014 — PMU vendored from P2 `master` a87ba58 (Phase 3)
+- **Context:**
+  - P2 was renamed `vikyathhj-ui/soc-pmu-sequencer`. Its default branch is `master`, and its RTL
+    is merged (P2 PRs #2 and #3).
+  - P2 PR #4 (README, resume bullets) was still open on 2026-11-02. `git diff a87ba58
+    origin/rework/pmu -- rtl scripts/regmap.yaml` is empty.
+- **Choice (owner: "start Phase 3 now"):** vendor from `master` `a87ba58`. If PR #4 changes
+  anything that is vendored, re-vendor.
+- **Register map:** `vendor/pmu/regmap.yaml` is identical to the provisional copy (D-009), so
+  `docs/MEMORY_MAP.md` is unchanged.
+
+## D-015 — Arch tests: SIM memory size, exclusions, and test addresses (Phase 3, owner decisions 2026-11-02)
+- **Size.** The riscv-arch-test 3.10.0 tests are far larger than the brief's 32 KB SIM memory. The
+  largest code is `rv32i_m/I/src/jal-01.S` at 1,756,272 bytes; the largest data is 7,532 bytes
+  (`bgeu-01`).
+  - Options: add a 2 MB "ARCH" configuration, or run only the tests that fit 32 KB.
+  - **Choice (owner):** only tests that fit the SIM configuration (IMEM 32 KB + DMEM 32 KB).
+  - `scripts/run_riscof.py` links each test with the real 32 KB script. Those that overflow are
+    listed as "NOT RUN (too big)", with the linker's overflow size, in
+    `results/riscof/summary.json`.
+- **PMP.** The 41 `rv32i_m/pmp32` tests are excluded as N/A (owner): the core has no PMP (SPEC §1).
+- **Zicsr.** riscv-arch-test 3.10.0 has no separate Zicsr suite for rv32i_m. CSR behaviour is
+  exercised through the `privilege` tests' trap handler (mtvec, mepc, mcause, mtval, mstatus).
+- **Addresses.** Spike has a built-in UART at 0x1000_0000, which overlaps the SoC's IMEM base. The
+  DUT and Spike must link identically, so for the arch tests only IMEM is at 0x8000_0000
+  (`riscof/env/link.ld`). `lp_rv32_xbar` takes `IMEM_BASE`/`DMEM_BASE` parameters (defaults = the
+  SoC memory map), and `tb/arch/tb_arch.sv` overrides IMEM_BASE. The core RTL is the same.
+
+## D-016 — Arch tests compiled with `-mno-relax` (Phase 3)
+- **Symptom:** `add-01` timed out on the DUT. The trace (`scripts/arch_one.py --trace`) showed an
+  illegal-instruction trap at pc 0x800002c8 on the word 0x00130001. The disassembly shows a 2-byte
+  `.insn 2, 0x0001` (c.nop) after a `la`, with the following 4-byte nops at 2-byte-aligned
+  addresses.
+- **Cause:** `arch_test.h` wraps `.align UNROLLSZ` in `.option rvc` (LA macro, RVTEST_CODE_BEGIN).
+  With linker relaxation, the linker trims the alignment padding and can leave a c.nop in it. A
+  core without C cannot execute that.
+- **Fix:** both plugins and the size check compile with `-mno-relax`, so the padding is exact.
+  The DUT and the reference get identical code. No c.nop remains (`objdump` count 0 for add-01).
+
+## D-017 — RISCOF flow checked with a mutant (Phase 3)
+- **Purpose:** to show that a PASS really means matching signatures.
+- **Method:** a copy of `core_decode.sv` that decodes SLTU as SLT was built into the testbench and
+  the full flow re-run.
+- **Result** (`results/riscof/mutation_check.txt`): `rv32i_m/I/src/sltu-01.S` FAIL, "183 of 724
+  words differ, first at word 1". Every other test still passes. The real RTL was never edited, and
+  the testbench was rebuilt from it afterwards.
+
 ## Bugs found by formal
 Every counterexample is kept under `results/formal_cex/`. `scripts/cex_dump.py <vcd>` prints it as
 a per-cycle table.

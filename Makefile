@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -o pipefail -c
 
-.PHONY: help env legacy-probe memmap memmap-check lint formal formal-quick clean
+.PHONY: help env legacy-probe memmap memmap-check lint formal formal-quick tb-arch tb-arch-trace riscof clean
 
 help:
 	@echo "make env           tool table -> results/env_check.txt (fails if anything is missing)"
@@ -15,6 +15,8 @@ help:
 	@echo "make lint          verilator -Wall, normal + RVFI build -> results/lint.txt"
 	@echo "make formal        riscv-formal, full depths -> results/formal/summary.json"
 	@echo "make formal-quick  riscv-formal, depths capped at 10 (CI) -> results/formal/summary_quick.json"
+	@echo "make tb-arch       build the RISCOF DUT testbench (Verilator) -> sim_build/tb_arch/tb_arch"
+	@echo "make riscof        riscv-arch-test 3.10.0 via RISCOF, Spike reference -> results/riscof/"
 	@echo "make clean         remove sim_build/"
 
 env:
@@ -37,6 +39,20 @@ formal:
 
 formal-quick:
 	python3 scripts/run_formal.py --quick
+
+CORE_FILES := $(shell grep -v '^\s*//' rtl/core/core.f | grep -v '^\s*$$')
+SOC_SIM_FILES := rtl/soc/mem_1rw1r_sim.sv rtl/soc/lp_rv32_xbar.sv rtl/soc/apb_bridge.sv
+
+tb-arch:
+	verilator --binary --timing -O2 -Wall -Wno-fatal --top-module tb_arch -Mdir sim_build/tb_arch -o tb_arch \
+	  $(CORE_FILES) $(SOC_SIM_FILES) tb/arch/tb_arch.sv
+
+tb-arch-trace:
+	verilator --binary --timing -O2 -DRISCV_FORMAL -Wno-fatal --top-module tb_arch -Mdir sim_build/tb_arch_trace -o tb_arch \
+	  $(CORE_FILES) $(SOC_SIM_FILES) tb/arch/tb_arch.sv
+
+riscof: tb-arch
+	python3 scripts/run_riscof.py
 
 clean:
 	rm -rf sim_build

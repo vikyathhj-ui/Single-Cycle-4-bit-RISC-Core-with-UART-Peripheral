@@ -1,0 +1,11 @@
+# Mutation check of the RISCOF flow (scripts/run_riscof.py), 2026-11-02T02:34Z
+# Mutant: rtl/core/core_decode.sv SLTU decoded as SLT (OP funct3=011). Real RTL untouched; tb rebuilt afterwards.
+## diff
+164c164
+<                     {7'b0000000, 3'b011}: begin legal = 1'b1; alu_op = OP_SLTU; end
+---
+>                     {7'b0000000, 3'b011}: begin legal = 1'b1; alu_op = OP_SLT;  end
+## run_riscof.py output with the mutant
+rv32i_m/I/src/sltu-01.S                            FAIL     183 of 724 words differ, first at word 1
+counts: {'NOT RUN': 7, 'N/A': 41, 'PASS': 64, 'FAIL': 1}
+  "FAIL": 1
