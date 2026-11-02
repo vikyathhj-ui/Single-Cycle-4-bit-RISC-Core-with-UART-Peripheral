@@ -1,0 +1,22 @@
+// Blackbox (ports only) of the OpenRAM macro sky130_sram_1kbyte_1rw1r_32x256_8, for LibreLane's
+// lint and synthesis steps (MACROS "vh"). Port list copied from the PDK model
+// $PDK_ROOT/sky130A/libs.ref/sky130_sram_macros/verilog/sky130_sram_1kbyte_1rw1r_32x256_8.v.
+(* blackbox *)
+module sky130_sram_1kbyte_1rw1r_32x256_8 (
+`ifdef USE_POWER_PINS
+    inout         vccd1,
+    inout         vssd1,
+`endif
+    input         clk0,
+    input         csb0,
+    input         web0,
+    input  [3:0]  wmask0,
+    input  [7:0]  addr0,
+    input  [31:0] din0,
+    output [31:0] dout0,
+    input         clk1,
+    input         csb1,
+    input  [7:0]  addr1,
+    output [31:0] dout1
+);
+endmodule

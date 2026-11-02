@@ -3,15 +3,31 @@
 Single source of truth for status. Update this before every commit.
 Spec: `docs/BRIEF.md`. Branch: `rework/lp-rv32`. PRs target `main`.
 
-**Current state (2026-11-02): Phase 4 DONE (gate met). Phase 3+4 PR opened. Next: Phase 5 (physical).**
-- Phase 5 resume point (LibreLane, sky130A, GDS memory configuration `LP_GDS`):
-  1. Flow config with the 2 SRAM macros: check LibreLane's macro variables in the installed
-     version, placement, halos, PDN over the macros.
-  2. Isolation and ICG cells (D-021 note).
-  3. Multi-corner STA with the TT-only SRAM liberty (S-10).
-  4. IR drop; activity power for active vs IDLE from VCDs of hello + sleep_demo; signoff.
-  5. `docs/FLOORPLAN.md`, `upf/lp_rv32.upf`.
-- INTERVIEW has 26 of the 40+ questions.
+**Current state (2026-11-02): Phase 5 IN PROGRESS, paused by the owner.** Phases 0–4 are merged (PR #1–#3).
+- Done so far in Phase 5:
+  - `flow/config.json`: LibreLane, `LP_GDS` + `PMU_SKY130_CELLS`, die 1100 x 1100 µm.
+  - 2 SRAM macros via `MACROS`: IMEM at (500,580) N, DMEM at (100,60) FS, halo 15 µm,
+    `PDN_MACRO_CONNECTIONS`.
+  - `flow/sky130_sram_1kbyte_1rw1r_32x256_8_bb.v`, the blackbox needed by the lint step.
+  - `upf/lp_rv32.upf`, not tool-verified.
+  - `scripts/sta_fmax.py`: per-corner fmax by an OpenSTA period sweep. Written but not yet run or
+    debugged.
+- **Run r01 (40 ns), stopped by errors.** Two findings, to be recorded as DECISIONS D-028 and D-029:
+  - The SRAM liberty has max_transition 0.04 ns on addr0/wmask0/addr1, which is unattainable (the
+    best achievable is 0.068 ns). That makes RepairDesignPostGRT fail, so
+    `RUN_POST_GRT_DESIGN_REPAIR` is now false, and the slew violations will be reported in signoff.
+  - At 40 ns, the setup worst slack was TT +0.77 / SS −48.6 / FF −0.48 ns (mid-PnR). The critical
+    path is u_imem dout1 on the falling edge → decode → a rising-edge flop: the half-cycle path
+    predicted by M-1.
+- **Run r02 (100 ns) was started and then stopped by the owner** before it finished.
+  `flow/runs/r02_p100` is incomplete.
+- **Resume:**
+  1. Re-run: `docker exec -w .../flow iic-osic bash -lc 'librelane --manual-pdk --pdk-root $PDK_ROOT --pdk $PDK --scl $STD_CELL_LIBRARY config.json --run-tag r02_p100 --overwrite'`.
+  2. Check DRC/LVS/antenna, then run `python3 scripts/sta_fmax.py flow/runs/r02_p100` (debug it).
+  3. IR drop.
+  4. Gate-level VCD power for active vs IDLE: use P1 `scripts/gls_power.py` as the model; the
+     IDLE window starts at cycle 1884 for 2952 cycles in RTL sleep_demo.
+  5. FLOORPLAN.md, DECISIONS D-028/D-029, commit.
 
 ## Phase 0 — Setup
 - [x] Environment check: `scripts/env_check.sh` → `results/env_check.txt`. All found (RESULT line).

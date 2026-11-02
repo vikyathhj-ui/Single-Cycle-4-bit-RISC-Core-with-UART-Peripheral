@@ -22,3 +22,4 @@ formal/checks/
 
 # firmware build outputs (scripts/build_sw.py)
 sw/build/
+flow/runs/

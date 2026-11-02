@@ -1,0 +1,92 @@
+##############################################################################################
+# lp_rv32.upf -- power intent for lp_rv32_soc (IEEE 1801-2015 syntax)
+#
+# NOT TOOL-VERIFIED. No open-source UPF checker exists, and the sky130 LibreLane flow does not
+# read UPF. This file documents the intent and is reviewed by hand against the RTL
+# (rtl/soc/lp_rv32_soc.sv, docs/SPEC.md §8, docs/POWER.md). It follows P2's
+# vendor/pmu/upf/pmu_soc.upf. The layout has no switch cells: power gating is behavioural
+# (BRIEF A6, out of scope).
+#
+# Domains (SPEC §8.1, D-007 S-7):
+#   PD_AON  : u_pmu, u_timer, u_sys, u_uwake, u_rst, g_psw[*], the isolation clamps (u_iso_*, g_iso_*)
+#   PD_CPU  : u_core, u_rom, u_xbar, u_br, u_irqc        (PMU domain 0, HAS_RET = 0: warm boot)
+#   PD_DSP  : u_q_dsp                                    (PMU domain 1, unused stub)
+#   PD_PERI : u_uart, u_gpio, u_q_peri                   (PMU domain 2)
+#   PD_MEM  : u_imem, u_dmem                             (always powered; clock gated with PD_CPU)
+# One 1.8 V supply, so there are no level shifters.
+##############################################################################################
+
+set_design_top lp_rv32_soc
+
+# ------------------------------------------------------------------ supplies
+create_supply_port VPWR -direction in
+create_supply_port VGND -direction in
+create_supply_net  VPWR
+create_supply_net  VGND
+connect_supply_net VPWR -ports VPWR
+connect_supply_net VGND -ports VGND
+
+create_supply_net  VDD_CPU
+create_supply_net  VDD_DSP
+create_supply_net  VDD_PERI
+
+create_supply_set  ss_aon  -function {power VPWR}     -function {ground VGND}
+create_supply_set  ss_cpu  -function {power VDD_CPU}  -function {ground VGND}
+create_supply_set  ss_dsp  -function {power VDD_DSP}  -function {ground VGND}
+create_supply_set  ss_peri -function {power VDD_PERI} -function {ground VGND}
+
+# ------------------------------------------------------------------ power domains
+create_power_domain PD_AON  -include_scope -supply {primary ss_aon}
+create_power_domain PD_CPU  -elements {u_core u_rom u_xbar u_br u_irqc} -supply {primary ss_cpu}
+create_power_domain PD_DSP  -elements {u_q_dsp} -supply {primary ss_dsp}
+create_power_domain PD_PERI -elements {u_uart u_gpio u_q_peri} -supply {primary ss_peri}
+create_power_domain PD_MEM  -elements {u_imem u_dmem} -supply {primary ss_aon}
+
+# ------------------------------------------------------------------ power switches (staged, P2 SPEC §4.3)
+foreach {pd idx net} {PD_CPU 0 VDD_CPU PD_DSP 1 VDD_DSP PD_PERI 2 VDD_PERI} {
+    create_power_switch sw_trickle_$pd -domain $pd \
+        -input_supply_port  {vin  VPWR} \
+        -output_supply_port [list vout $net] \
+        -control_port       [list ctrl u_pmu/psw_trickle_en\[$idx\]] \
+        -ack_port           [list ack  u_pmu/psw_trickle_ack\[$idx\]] \
+        -on_state           {on vin {ctrl}} \
+        -off_state          {off {!ctrl}}
+    create_power_switch sw_main_$pd -domain $pd \
+        -input_supply_port  {vin  VPWR} \
+        -output_supply_port [list vout $net] \
+        -control_port       [list ctrl u_pmu/psw_main_en\[$idx\]] \
+        -ack_port           [list ack  u_pmu/psw_main_ack\[$idx\]] \
+        -on_state           {on vin {ctrl}} \
+        -off_state          {off {!ctrl}}
+}
+
+# ------------------------------------------------------------------ isolation (D-021)
+# Clamps sit in PD_AON (iso_wrap instances in lp_rv32_soc.sv), driven by the PMU iso_en outputs.
+# PD_CPU outputs: APB request and the wake request clamp to 0. The Q-Channel outputs are
+# isolated inside the PMU (vendor/pmu/rtl/pmu_top.sv).
+set_isolation iso_cpu -domain PD_CPU -applies_to outputs -clamp_value 0 \
+    -isolation_signal u_pmu/iso_en[0] -isolation_sense high -location parent
+# PD_PERI outputs: PRDATA, irq, gpio_o and gpio_oe clamp to 0; PREADY, PSLVERR and uart_txd
+# clamp to 1. A powered-off peripheral answers an APB access with an error, and the UART line
+# idles high.
+set_isolation iso_peri_0 -domain PD_PERI -applies_to outputs -clamp_value 0 \
+    -elements {u_uart/prdata u_gpio/prdata u_uart/irq u_gpio/irq u_gpio/gpio_o u_gpio/gpio_oe} \
+    -isolation_signal u_pmu/iso_en[2] -isolation_sense high -location parent
+set_isolation iso_peri_1 -domain PD_PERI -applies_to outputs -clamp_value 1 \
+    -elements {u_uart/pready u_uart/pslverr u_gpio/pready u_gpio/pslverr u_uart/txd} \
+    -isolation_signal u_pmu/iso_en[2] -isolation_sense high -location parent
+
+# ------------------------------------------------------------------ retention
+# None: HAS_RET = 0 for every domain. DEEP_SLEEP is followed by a warm boot (SPEC §7, docs/POWER.md §4).
+
+# ------------------------------------------------------------------ power states
+add_power_state PD_CPU  -state ON  {-supply_expr {ss_cpu.power == FULL_ON}} \
+                        -state OFF {-supply_expr {ss_cpu.power == OFF}}
+add_power_state PD_PERI -state ON  {-supply_expr {ss_peri.power == FULL_ON}} \
+                        -state OFF {-supply_expr {ss_peri.power == OFF}}
+add_power_state PD_DSP  -state ON  {-supply_expr {ss_dsp.power == FULL_ON}} \
+                        -state OFF {-supply_expr {ss_dsp.power == OFF}}
+# System modes (P2 SPEC §3.2, firmware uses RUN, IDLE, DEEP_SLEEP):
+#   RUN        : CPU ON,                 PERI ON
+#   IDLE       : CPU ON (clock gated),   PERI ON
+#   DEEP_SLEEP : CPU OFF,                PERI OFF      (AON and MEM always ON)

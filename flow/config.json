@@ -1,0 +1,119 @@
+{
+  "//": "LibreLane flow for lp_rv32_soc, GDS memory configuration (docs/FLOORPLAN.md, BRIEF A6). Macro variables per the installed LibreLane (librelane/config/variable.py Macro; PDN_MACRO_CONNECTIONS; FP_MACRO_*_HALO). SRAM has a TT-only liberty, used at every corner (S-10). CLOCK_PERIOD 100 ns: implementation target that closes at SS; fmax per corner is measured afterwards by an OpenSTA period sweep (D-029). RUN_POST_GRT_DESIGN_REPAIR off: the SRAM liberty's 0.04 ns max_transition on addr0/wmask0/addr1 cannot be met by any driver (D-028).",
+  "DESIGN_NAME": "lp_rv32_soc",
+  "VERILOG_FILES": [
+    "dir::../vendor/alu/rtl/alu_pkg.sv",
+    "dir::../vendor/alu/rtl/adders/pg_black.sv",
+    "dir::../vendor/alu/rtl/adders/pg_gray.sv",
+    "dir::../vendor/alu/rtl/adders/cla4_unit.sv",
+    "dir::../vendor/alu/rtl/adders/adder_rca.sv",
+    "dir::../vendor/alu/rtl/adders/adder_cla4.sv",
+    "dir::../vendor/alu/rtl/adders/adder_csla.sv",
+    "dir::../vendor/alu/rtl/adders/adder_bk.sv",
+    "dir::../vendor/alu/rtl/adders/adder_ks.sv",
+    "dir::../vendor/alu/rtl/adders/adder_sk.sv",
+    "dir::../vendor/alu/rtl/adders/adder_hc.sv",
+    "dir::../vendor/alu/rtl/adders/adder_beh.sv",
+    "dir::../vendor/alu/rtl/adders/adder.sv",
+    "dir::../vendor/alu/rtl/shifter.sv",
+    "dir::../vendor/alu/rtl/clz_tree.sv",
+    "dir::../vendor/alu/rtl/clz.sv",
+    "dir::../vendor/alu/rtl/cpop.sv",
+    "dir::../rtl/core/core_alu.sv",
+    "dir::../rtl/core/core_decode.sv",
+    "dir::../rtl/core/core_regfile.sv",
+    "dir::../rtl/core/core_csr.sv",
+    "dir::../rtl/core/lp_rv32_core.sv",
+    "dir::../vendor/pmu/rtl/pmu_regmap_pkg.sv",
+    "dir::../vendor/pmu/rtl/cells/icg_wrap.sv",
+    "dir::../vendor/pmu/rtl/cells/iso_wrap.sv",
+    "dir::../vendor/pmu/rtl/sync_ff.sv",
+    "dir::../vendor/pmu/rtl/rst_sync.sv",
+    "dir::../vendor/pmu/rtl/inrush_arb.sv",
+    "dir::../vendor/pmu/rtl/qch_master.sv",
+    "dir::../vendor/pmu/rtl/wake_ctrl.sv",
+    "dir::../vendor/pmu/rtl/apb_regs.sv",
+    "dir::../vendor/pmu/rtl/pd_ctrl.sv",
+    "dir::../vendor/pmu/rtl/pmu_top.sv",
+    "dir::../rtl/periph/uart_lite.sv",
+    "dir::../rtl/periph/gpio8.sv",
+    "dir::../rtl/periph/timer_clint.sv",
+    "dir::../rtl/periph/irqc8.sv",
+    "dir::../rtl/periph/sysctrl.sv",
+    "dir::../rtl/periph/uart_wake.sv",
+    "dir::../rtl/soc/bootrom.sv",
+    "dir::../rtl/soc/lp_rv32_xbar.sv",
+    "dir::../rtl/soc/apb_bridge.sv",
+    "dir::../rtl/soc/qch_stub_dev.sv",
+    "dir::../rtl/soc/psw_model.sv",
+    "dir::../rtl/soc/lp_rv32_soc.sv"
+  ],
+  "VERILOG_INCLUDE_DIRS": [
+    "dir::../rtl/soc"
+  ],
+  "VERILOG_DEFINES": [
+    "LP_GDS",
+    "PMU_SKY130_CELLS"
+  ],
+  "USE_SLANG": true,
+  "CLOCK_PORT": "clk",
+  "CLOCK_PERIOD": 100.0,
+  "FP_SIZING": "absolute",
+  "DIE_AREA": [
+    0,
+    0,
+    1100,
+    1100
+  ],
+  "PL_TARGET_DENSITY_PCT": 40,
+  "MACROS": {
+    "sky130_sram_1kbyte_1rw1r_32x256_8": {
+      "gds": [
+        "pdk_dir::libs.ref/sky130_sram_macros/gds/sky130_sram_1kbyte_1rw1r_32x256_8.gds"
+      ],
+      "lef": [
+        "pdk_dir::libs.ref/sky130_sram_macros/lef/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
+      ],
+      "lib": {
+        "*": [
+          "pdk_dir::libs.ref/sky130_sram_macros/lib/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
+        ]
+      },
+      "spice": [
+        "pdk_dir::libs.ref/sky130_sram_macros/spice/sky130_sram_1kbyte_1rw1r_32x256_8.spice"
+      ],
+      "instances": {
+        "u_imem": {
+          "location": [
+            500,
+            580
+          ],
+          "orientation": "N"
+        },
+        "u_dmem": {
+          "location": [
+            100,
+            60
+          ],
+          "orientation": "FS"
+        }
+      },
+      "vh": [
+        "dir::sky130_sram_1kbyte_1rw1r_32x256_8_bb.v"
+      ]
+    }
+  },
+  "FP_MACRO_HORIZONTAL_HALO": 15,
+  "FP_MACRO_VERTICAL_HALO": 15,
+  "PDN_MACRO_CONNECTIONS": [
+    "u_imem VPWR VGND vccd1 vssd1",
+    "u_dmem VPWR VGND vccd1 vssd1"
+  ],
+  "RUN_POST_GRT_DESIGN_REPAIR": false,
+  "RUN_POST_GRT_RESIZER_TIMING": true,
+  "EXTRA_EXCLUDED_CELLS": [
+    "sky130_fd_sc_hd__clkdlybuf*",
+    "sky130_fd_sc_hd__dlygate*"
+  ],
+  "OPENROAD_THREADS": 6
+}
