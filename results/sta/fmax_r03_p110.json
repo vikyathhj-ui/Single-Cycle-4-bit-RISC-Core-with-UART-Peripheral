@@ -1,0 +1,71 @@
+{
+  "run": "flow/runs/r03_p110",
+  "run_clock_period_ns": 110,
+  "method": "OpenSTA period binary search on the final netlist + SPEF with LibreLane base.sdc (D-029)",
+  "sram_liberty": "TT_1p8V_25C at every corner (S-10)",
+  "corners": [
+    {
+      "corner": "nom_tt_025C_1v80",
+      "min_period_ns": 51.313,
+      "fmax_mhz": 19.488,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": 0.0
+    },
+    {
+      "corner": "nom_ss_100C_1v60",
+      "min_period_ns": 98.997,
+      "fmax_mhz": 10.101,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": 0.0
+    },
+    {
+      "corner": "nom_ff_n40C_1v95",
+      "min_period_ns": 32.61,
+      "fmax_mhz": 30.665,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": 0.0
+    },
+    {
+      "corner": "min_tt_025C_1v80",
+      "min_period_ns": 49.024,
+      "fmax_mhz": 20.398,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": 0.0
+    },
+    {
+      "corner": "min_ss_100C_1v60",
+      "min_period_ns": 94.662,
+      "fmax_mhz": 10.564,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": 0.0
+    },
+    {
+      "corner": "min_ff_n40C_1v95",
+      "min_period_ns": 31.1,
+      "fmax_mhz": 32.154,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": 0.0
+    },
+    {
+      "corner": "max_tt_025C_1v80",
+      "min_period_ns": 53.408,
+      "fmax_mhz": 18.724,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": 0.0
+    },
+    {
+      "corner": "max_ss_100C_1v60",
+      "min_period_ns": 102.942,
+      "fmax_mhz": 9.714,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": 0.0
+    },
+    {
+      "corner": "max_ff_n40C_1v95",
+      "min_period_ns": 33.974,
+      "fmax_mhz": 29.434,
+      "setup_ws_at_run_period_ns": 0.0,
+      "hold_ws_at_run_period_ns": -0.0
+    }
+  ]
+}

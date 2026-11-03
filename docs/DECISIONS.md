@@ -430,6 +430,75 @@ All options come from the installed framework (`ext/riscv-formal` at `c992aa6`, 
 - **Firmware practice:** clear WAKE_SRC before sleeping (`sleep_demo` does). After DEEP_SLEEP the
   recorded value was exactly the one enabled source each time: 0x2 for UART, 0x4 for the timer.
 
+## D-028 — SRAM liberty max_transition 0.04 ns: post-GRT design repair disabled (Phase 5)
+- **Symptom:** run r01 (40 ns) stopped in `OpenROAD.RepairDesignPostGRT` with `[RSZ-0090] Max
+  transition time from SDC is 0.040ns. Best achievable transition time is 0.068ns with a load of
+  0.01pF`.
+- **Cause:** `sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib` sets `max_transition : 0.04` on
+  the buses `addr0`, `wmask0` and `addr1` (lib lines 188, 225, 427). The same file's
+  `default_max_transition` is 0.5. No sky130_fd_sc_hd driver can produce a 0.04 ns transition
+  into that pin load (the resizer's best is 0.068 ns).
+- **Options:**
+  - edit a copy of the PDK liberty, which would change a vendor view;
+  - lower the global MAX_TRANSITION, which does not help: the pin limit is tighter;
+  - disable only the post-global-route repair step that treats it as a hard error.
+- **First choice (run r02), reversed:** `RUN_POST_GRT_DESIGN_REPAIR` = false.
+  - That left the whole design without post-route slew repair: 7,859 max-slew violations at
+    max_ss, with fanout nets at 2.39 ns against the 0.75 ns limit, while the pre-route repair alone
+    was not enough (`results/flow/r02_evidence.json`).
+  - Too blunt.
+- **Final choice:** keep post-route repair, and give the flow a derived SRAM liberty
+  (`scripts/sram_lib_relax.py` → `flow/lib/…TT_1p8V_25C.relaxed.lib`).
+  - It is a copy of the PDK file in which only the three `max_transition : 0.04` lines of the buses
+    `addr0`, `wmask0` and `addr1` are set to the file's own `default_max_transition` (0.5). The diff
+    is in `results/flow/sram_lib_relax.diff`.
+  - Timing arcs, pins and area are unchanged, and the PDK file is not modified.
+  - The transitions actually reached at those SRAM pins are reported in signoff against the
+    original 0.04 ns value, so the deviation stays visible.
+
+## D-029 — fmax per corner by an STA period sweep, implementation at 100 ns (Phase 5)
+- **Context:** at 40 ns (run r01, mid-PnR) the setup worst slack was TT +0.77 ns, SS −48.6 ns,
+  FF −0.48 ns.
+  - The critical path starts at `u_imem` on the **falling** clock edge (dout1) and ends at a
+    rising-edge flop after decode and execute. This is the half-cycle path accepted at the spec
+    gate (M-1).
+  - For such a path slack = T/2 − delay, so fmax ≠ 1/(T − slack).
+- **Choice:**
+  - Implement at CLOCK_PERIOD = 100 ns, so that every corner can close and the resizer is not
+    driven by impossible violations.
+  - Measure fmax per corner with `scripts/sta_fmax.py`: OpenSTA on the final netlist + SPEF,
+    LibreLane's own `base.sdc` re-applied at each trial period, and a binary search to 0.05 ns for
+    the smallest period with setup slack ≥ 0, for all 9 corners.
+  - The SRAM uses its TT liberty at every corner (S-10), and every fmax is labelled that way.
+- **Limitation:** a design implemented for 100 ns is not optimised by the resizer for shorter
+  periods. The reported fmax is that of this implementation, not the best a tighter target could
+  reach.
+
+## D-030 — Hold margins 0.2 ns (Phase 5)
+- **Context:** in run r02, after the resizer's hold repair, there were still hold violations at
+  max_ff (29 paths, worst −0.164 ns), nom_ff (19), min_ff (13) and max_tt (4)
+  (`flow/runs/r02_p100/56-openroad-stapostpnr/*/min.rpt`).
+  - The worst path is register-to-register between flops on the ungated `clk_regs` tree and the
+    PMU-gated tree. The gated tree's ICG plus delay buffers give the skew.
+  - The resizer already works on every STA corner (`RSZ_CORNERS` unset → `STA_CORNERS`).
+- **Choice:** `PL_RESIZER_HOLD_SLACK_MARGIN` 0.1 → 0.2 and `GRT_RESIZER_HOLD_SLACK_MARGIN`
+  0.05 → 0.2, so the repair aims beyond 0.
+- **Cost:** more hold buffers, i.e. area and some power. Measured in the run that uses it.
+
+## D-031 — Magic DRC with the OpenRAM macros as abstract views (Phase 5)
+- **Evidence (run r02):** Magic DRC on the full GDS reported 5,189,248 markers.
+  - **All** of them are inside the two SRAM footprints: 2,832,125 in u_imem and 2,357,123 in
+    u_dmem. **0** are outside (`results/flow/r02_evidence.json`).
+  - Magic also warned that cells inside the macro GDS are placed on top of themselves.
+  - KLayout DRC on the same GDS: 0. LVS: 0 errors. Routing DRC: 0. Antenna: 0.
+- **Interpretation:** the OpenRAM bitcell array is built with SRAM-specific rule exceptions that
+  Magic's full sky130 deck flags. The design's own placement and routing has no Magic markers.
+- **Choice:** `MAGIC_DRC_MAGLEFS` = the PDK's `maglef/sky130_sram_1kbyte_1rw1r_32x256_8.mag`.
+  LibreLane: "abstract LEF views ... act as blackboxes during DRC". Magic then checks everything
+  except the macro internals.
+- **Reporting:** both numbers are reported, the full-GDS count with its location analysis and the
+  abstract-view count. The macros are not claimed to be Magic-clean internally.
+
 ## Bugs found by formal
 Every counterexample is kept under `results/formal_cex/`. `scripts/cex_dump.py <vcd>` prints it as
 a per-cycle table.

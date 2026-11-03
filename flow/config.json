@@ -1,5 +1,5 @@
 {
-  "//": "LibreLane flow for lp_rv32_soc, GDS memory configuration (docs/FLOORPLAN.md, BRIEF A6). Macro variables per the installed LibreLane (librelane/config/variable.py Macro; PDN_MACRO_CONNECTIONS; FP_MACRO_*_HALO). SRAM has a TT-only liberty, used at every corner (S-10). CLOCK_PERIOD 100 ns: implementation target that closes at SS; fmax per corner is measured afterwards by an OpenSTA period sweep (D-029). RUN_POST_GRT_DESIGN_REPAIR off: the SRAM liberty's 0.04 ns max_transition on addr0/wmask0/addr1 cannot be met by any driver (D-028).",
+  "//": "LibreLane flow for lp_rv32_soc, GDS memory configuration (docs/FLOORPLAN.md, BRIEF A6). Macro variables per the installed LibreLane (librelane/config/variable.py Macro; PDN_MACRO_CONNECTIONS; FP_MACRO_*_HALO). SRAM liberty: TT only, used at every corner (S-10), derived copy with the unattainable 0.04 ns max_transition on addr0/wmask0/addr1 set to the file's default 0.5 (scripts/sram_lib_relax.py, D-028). CLOCK_PERIOD 110 ns is the implementation target; fmax per corner is measured by an OpenSTA period sweep (D-029). Hold margins 0.2 ns (D-030). MAGIC_DRC_MAGLEFS: Magic DRC treats the OpenRAM macros as abstract views (D-031). Design-repair slew/cap margins 50 % (D-033): with 20 %/10 % (run r03) max-slew violations remained at all 9 corners, 7,809 at max_ss and 1,171 at max_tt.",
   "DESIGN_NAME": "lp_rv32_soc",
   "VERILOG_FILES": [
     "dir::../vendor/alu/rtl/alu_pkg.sv",
@@ -57,7 +57,7 @@
   ],
   "USE_SLANG": true,
   "CLOCK_PORT": "clk",
-  "CLOCK_PERIOD": 100.0,
+  "CLOCK_PERIOD": 110.0,
   "FP_SIZING": "absolute",
   "DIE_AREA": [
     0,
@@ -76,7 +76,7 @@
       ],
       "lib": {
         "*": [
-          "pdk_dir::libs.ref/sky130_sram_macros/lib/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
+          "dir::lib/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.relaxed.lib"
         ]
       },
       "spice": [
@@ -109,11 +109,20 @@
     "u_imem VPWR VGND vccd1 vssd1",
     "u_dmem VPWR VGND vccd1 vssd1"
   ],
-  "RUN_POST_GRT_DESIGN_REPAIR": false,
+  "RUN_POST_GRT_DESIGN_REPAIR": true,
   "RUN_POST_GRT_RESIZER_TIMING": true,
   "EXTRA_EXCLUDED_CELLS": [
     "sky130_fd_sc_hd__clkdlybuf*",
     "sky130_fd_sc_hd__dlygate*"
   ],
-  "OPENROAD_THREADS": 6
+  "OPENROAD_THREADS": 6,
+  "PL_RESIZER_HOLD_SLACK_MARGIN": 0.2,
+  "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.2,
+  "MAGIC_DRC_MAGLEFS": [
+    "pdk_dir::libs.ref/sky130_sram_macros/maglef/sky130_sram_1kbyte_1rw1r_32x256_8.mag"
+  ],
+  "DESIGN_REPAIR_MAX_SLEW_PCT": 50,
+  "DESIGN_REPAIR_MAX_CAP_PCT": 50,
+  "GRT_DESIGN_REPAIR_MAX_SLEW_PCT": 50,
+  "GRT_DESIGN_REPAIR_MAX_CAP_PCT": 50
 }

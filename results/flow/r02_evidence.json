@@ -1,0 +1,31 @@
+{
+  "run": "flow/runs/r02_p100",
+  "config": "CLOCK_PERIOD 100, RUN_POST_GRT_DESIGN_REPAIR false, Magic DRC on full GDS",
+  "magic_drc_markers_total": 5189248,
+  "magic_markers_inside_macro_footprint": {
+    "u_imem": 2832125,
+    "u_dmem": 2357123
+  },
+  "magic_markers_outside_macros": 0,
+  "klayout_drc_errors": 0,
+  "lvs_errors": 0,
+  "route_drc_errors": 0,
+  "antenna_violating_nets": 0,
+  "max_slew_violations_max_ss": 7859,
+  "setup_ws_max_ss_ns": -1.7965576201880296,
+  "hold_ws_max_ff_ns": -0.16368529217573632,
+  "macro_footprints_um": {
+    "u_imem": [
+      500,
+      580,
+      979.78,
+      977.5
+    ],
+    "u_dmem": [
+      100,
+      60,
+      579.78,
+      457.5
+    ]
+  }
+}

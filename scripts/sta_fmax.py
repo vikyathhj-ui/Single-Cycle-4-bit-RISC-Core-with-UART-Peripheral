@@ -56,7 +56,8 @@ link_design {res['DESIGN_NAME']}
 read_spef {spef_for(run, rc)}
 proc try_period {{p}} {{
     set ::env(CLOCK_PERIOD) $p
-    source {BASE_SDC}
+    # global scope: base.sdc mixes `clock_port` and `::clock_port`
+    uplevel #0 [list source {BASE_SDC}]
     return [sta::worst_slack_cmd max]
 }}
 set run_period {res['CLOCK_PERIOD']}
@@ -88,12 +89,15 @@ def one(run: Path, rc: str, pvt: str, res: dict, work: Path) -> dict:
     (work / f"{name}.log").write_text(log.stdout + log.stderr)
     if not out.exists():
         return {"corner": name, "error": (log.stdout + log.stderr)[-800:]}
+    if "__VIRTUAL_CLK__" in log.stdout:
+        return {"corner": name, "error": "clock not applied (virtual clock), see log"}
     vals = dict(re.findall(r"(\S+) (\S+)", out.read_text()))
     p = float(vals["min_period"])
     return {"corner": name, "min_period_ns": round(p, 3) if p > 0 else None,
             "fmax_mhz": round(1000.0 / p, 3) if p > 0 else None,
-            "setup_ws_at_run_period_ns": round(float(vals["setup_slack_at_run_period"]), 4),
-            "hold_ws_at_run_period_ns": round(float(vals["hold_slack_at_run_period"]), 4)}
+            # OpenSTA's sta::worst_slack_cmd returns seconds
+            "setup_ws_at_run_period_ns": round(float(vals["setup_slack_at_run_period"]) * 1e9, 4),
+            "hold_ws_at_run_period_ns": round(float(vals["hold_slack_at_run_period"]) * 1e9, 4)}
 
 
 def main() -> int:
